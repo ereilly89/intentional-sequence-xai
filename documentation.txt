@@ -1,0 +1,10 @@
+
+# Commands
+
+python -m scripts.predictability --env MiniGrid-Empty-5x5-v0 --model DoorKey --episodes 1 
+
+python -m scripts.evaluate --env MiniGrid-DoorKey-5x5-v0 --model DoorKey --episodes 100
+
+# Install 
+
+pip install git+https://github.com/ereilly89/gym-minigrid@901e4bb4ede84f81c39dfa6b9162dcfe449bb148

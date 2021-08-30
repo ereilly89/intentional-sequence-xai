@@ -88,10 +88,48 @@ def getSequence(state, MDP, intentStates, reverse, threshold):
     return sequence
     
 
+def getRandomSequence(currState, MDP, reverse, seqLen):
+    import random
+    queue = [currState]
+    visited = {}
+    sequence = []
+    while len(queue) > 0 and len(sequence) < seqLen:
+        currState = queue.pop(0)
+
+        if currState in MDP.keys():
+            visited[currState] = True 
+            actionIndex = random.choice(list(MDP[currState].keys()))
+
+            values = MDP[currState][actionIndex]
+            state = values["obs"]
+
+            if state not in visited.keys():
+                queue.append(state)
+            
+            print("")
+            if reverse:
+                sequence.insert(0, "a" + str(actionIndex))
+                sequence.insert(0, "s" + str(state))
+            else:
+                sequence.append("a" + str(actionIndex))
+                sequence.append("s" + str(state))
+            print("len(sequence): " + str(len(sequence)))
+            print("seqLen: " + str(seqLen))
+        else:
+            print("something went wrong.")
+        
+    return sequence
+
+
+
+
+
 def buildSequences(graph, reverseGraph, threshold, budget):
 
     print("building sequences...")
+
     def getSequenceIntentionality(sequence):
+        print("computing sequence intentionality...")
         intentionality = 1
         for i in range(len(sequence)):
             if i % 2 == 0:
@@ -120,29 +158,93 @@ def buildSequences(graph, reverseGraph, threshold, budget):
     intents = dict(intentTuple)
 
     intentionalities = {}
-    os.remove("intentionality.txt")
+    os.remove("Results/intentional/intentionality.txt")
 
+    print("parsing through states in order of intentionality...")
     # Parse through each state from highest to lowest intent, extract the intentional sequences
     for key in intents.keys():
         val = {}
         if count < budget:
             state = key
+
+            print("getting context...")
             context = getSequence(state, rMDP, intentStates, True, threshold)
+            print("getting future...")
             future = getSequence(state, MDP, intentStates, False, threshold)
+
             sequence = context + ["s" + str(state)] + future
+
             val["sequence"] = sequence
-            # print("sequence:"+str(sequence))
             val["intentionality"] = getSequenceIntentionality(sequence)
-            #print("intent-> "+ str(val["intentionality"]))
-            
             intentionalities[count] = val["intentionality"]
+
             sequences[count] = val
             count = count + 1
         else:
             break
     
     for intent in intentionalities.keys():
-        print(str(intent) + ": " + str(intentionalities[intent]), file=open("intentionality.txt", "a"))
+        print(str(intent) + ": " + str(intentionalities[intent]), file=open("Results/intentional/intentionality.txt", "a"))
     
-    # print(str(sequences))
     return sequences
+
+
+def buildRandomSequences(graph, reverseGraph, sequences):
+    # generate random sequences of the same size as the intentional ones
+    print("building random sequences...")
+    def getSequenceIntentionality(sequence):
+        print("computing sequence intentionality...")
+        intentionality = 1
+        for i in range(len(sequence)):
+            if i % 2 == 0:
+                state = sequence[i]
+                state_id = state[1:]
+                intentionality = intentionality * intentStates[state_id]
+        return intentionality
+
+    import random
+    randomSequences = {}
+    intentionalities = {}
+    count = 0
+    intentStates = getIntentionalStates(graph)
+    for s in sequences: 
+        sequence = []
+        #iters = 0
+        while len(sequence) != len(sequences[s]["sequence"]): # or iters > 100:
+            startState, endStates = random.choice(list(graph.items()))
+            sequence = ["s" + str(startState)]
+
+            print("\n\nrandomly parsing future states...")
+            print("sequences[s]:" + str(sequences[s]["sequence"]))
+            print("len(sequences[s]['sequence']):" + str(len(sequences[s]['sequence'])))
+            future = getRandomSequence(startState, graph, False, len(sequences[s]["sequence"])-1)
+            context = []
+            print("len(future):"+str(len(future)))
+            
+            if len(future) != len(sequences[s]["sequence"]) - 1:
+                print("randomly parsing context states...")
+                context = getRandomSequence(startState, reverseGraph, True, len(sequences[s]["sequence"])-len(future)-1)
+
+            if len(context) > 0:
+                sequence = context + sequence
+                
+            if len(future) > 0:
+                sequence = sequence + future
+            print("sequence:"+str(sequence))
+
+        val = {}
+        val["sequence"] = sequence
+        val["intentionality"] = getSequenceIntentionality(sequence)
+        os.remove("Results/random/random_intentionality.txt")
+
+        intentionalities[count] = val["intentionality"]
+        randomSequences[count] = val
+
+        count = count + 1
+
+        #iters = iters + 1
+
+        for intent in intentionalities.keys():
+            print(str(intent) + ": " + str(intentionalities[intent]), file=open("Results/random/random_intentionality.txt", "a"))
+
+    return randomSequences

@@ -190,6 +190,7 @@ def visualize(sequences, images, envMap, environment, model, argmax, seed, memor
         if env.window.closed:
             return
 
+        
         try:
             if gif:
                 print("Saving gif... ", end="")
@@ -198,6 +199,7 @@ def visualize(sequences, images, envMap, environment, model, argmax, seed, memor
         except ValueError:
             print("sequence-> " + str(sequence))
             print("value error.")
+
 
         for sentence in description:
             print(sentence, file=open(gif + str(s) + "_explanation.txt", "a"))

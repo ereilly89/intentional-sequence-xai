@@ -7,7 +7,7 @@ from torch_ac.utils.penv import ParallelEnv
 import hashlib
 import utils
 import os
-from scripts.intentions_RL import getIntentionalStates, buildSequences
+from scripts.intentions_RL import getIntentionalStates, buildSequences, buildRandomSequences
 from scripts.visualize_sequences import visualize
 
 """
@@ -246,34 +246,31 @@ def main():
             
             reverseGraph[tempStateIndex][actionIndex] = value
 
-    print("GRAPH!!!!!!!!!\n" + str(graph))
+
+    print("\n\n\nGRAPH--->\n\n" + str(graph))
     os.remove("graph.txt")
     print(graph, file=open("graph.txt", "w"))
-    print("numStartingStates:" + str(len(graph)))
-    print("numEdges" + str(numEdges))
 
-    # print("intentional states:" + str(getIntentionalStates(graph)))
-
+    #construct and visualize the intentional sequences
     sequences = buildSequences(graph, reverseGraph, 0, 10)
-    # print("sequences:"+str(sequences))
-
-    gifFilename =  str(args.env) + "_" + str(args.model) + "_" + str(args.seed) + "_"
-
-    # print("envMap:" + str(envMap))
-
+    gifFilename =  "Results/intentional/" + str(args.env) + "_" + str(args.model) + "_" + str(args.seed) + "_"
     visualize(sequences, images, envMap, args.env, args.model, args.argmax, args.seed, args.memory, "", args.episodes, 1, gifFilename, model_dir, agent, statesInfo)
+
+    #construct and visualize the random sequences
+    # randomSequences = buildRandomSequences(graph, reverseGraph, sequences)
+    # rdmFilename = "Results/random/" + str(args.env) + "_" + str(args.model) + "_" + str(args.seed) + "_Random"
+    # visualize(randomSequences, images, envMap, args.env, args.model, args.argmax, args.seed, args.memory, "", args.episodes, 1, rdmFilename, model_dir, agent, statesInfo)
 
     end_time = time.time()
 
     # Print logs
-
+    """
     num_frames = sum(logs["num_frames_per_episode"])
     fps = num_frames/(end_time - start_time)
     duration = int(end_time - start_time)
     return_per_episode = utils.synthesize(logs["return_per_episode"])
     num_frames_per_episode = utils.synthesize(logs["num_frames_per_episode"])
 
-    """
     print("F {} | FPS {:.0f} | D {} | R:μσmM {:.2f} {:.2f} {:.2f} {:.2f} | F:μσmM {:.1f} {:.1f} {} {}"
         .format(num_frames, fps, duration,
                 *return_per_episode.values(),

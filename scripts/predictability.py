@@ -24,88 +24,122 @@ def redraw(img, isManual):
     window.show_img(img)
 
 
-def reset(isManual, stateInfo=None):
+def resetManual():
     if args.seed != -1:
         env.seed(args.seed)
 
     if int(args.episodes) > 0:
         valid = False
         while not valid:
-            if isManual:
-                obs = env.reset(None)
-                if env.hash() not in uniqueStartStates.keys():
-                    valid = True
-                    uniqueStartStates[env.hash()] = True
-                    print("unique: " + str(uniqueStartStates))
-                    args.episodes = str(int(args.episodes) - 1)
-            else:
-                obs = env.envs[0].reset(None)
-                
-                print("env.hash(): " + str(env.envs[0].hash()))
+            obs = env.reset(None)
+            if env.hash() not in uniqueStartStates.keys():
+                valid = True
+                uniqueStartStates[env.hash()] = True
+                print("unique: " + str(uniqueStartStates))
+                args.episodes = str(int(args.episodes) - 1)
+                state = saveState(env)
+        redraw(obs, True)
+        return state
 
-                if env.envs[0].hash() not in uniqueStartStates.keys():
-                    valid = True
-                    uniqueStartStates[env.envs[0].hash()] = True
-                    print("unique: " + str(uniqueStartStates))
-                    args.episodes = str(int(args.episodes) - 1)
-                
-        if hasattr(env, 'mission'):
-            print('Mission: %s' % env.mission)
-            window.set_caption(env.mission)
-
-        redraw(obs, isManual)
-        return obs
     else:
         window.close()
         return None
 
 
+def resetAI(stateInfo):
+    if args.seed != -1:
+        env.seed(args.seed)
+
+    print("\n\nepisodes: " + str(args.episodes))
+    if int(args.episodes) > 0:
+        obs = env.envs[0].reset(None)
+            
+        # set the state of the environment
+        env.envs[0].agent_pos = stateInfo["agent_pos"]
+        env.envs[0].agent_dir = stateInfo["agent_dir"]
+
+        redraw(obs, False)
+        return obs
+        
+"""
 def step(action, isManual=False):
     obs, reward, done, info = env.step(action)
     print('step=%s, reward=%.2f' % (env.step_count, reward))
 
     if done:
         print('done!')
-        reset(isManual)
+        if isManual:
+            resetManual()
+        else:
+            resetAI()
+        #reset(isManual)
     else:
         redraw(obs, isManual)
+"""
+
+def stepManual(action):
+    obs, reward, done, info = env.step(action)
+    if done:
+        stateInfo = resetManual()
+        return stateInfo
+    else:
+        redraw(obs, True)
+        return None
+
+
+def stepAI(action, stateInfo):
+    obs, reward, done, info = env.step(action)
+    if done:
+        resetAI(stateInfo)
+    else:
+        redraw(obs, False)
 
 
 def key_handler(event):
     print('pressed', event.key)
-
     if event.key == 'escape':
         window.close()
         return
-
     if event.key == 'backspace':
-        reset(True)
+        resetManual()
         return
-
     if event.key == 'left':
-        step(env.actions.left, True)
+        stateInfo = stepManual(env.actions.left)
+        if stateInfo is not None:
+            resetAI(stateInfo)
         return
     if event.key == 'right':
-        step(env.actions.right, True)
+        stateInfo = stepManual(env.actions.right)
+        if stateInfo is not None:
+            resetAI(stateInfo)
         return
     if event.key == 'up':
-        step(env.actions.forward, True)
+        stateInfo = stepManual(env.actions.forward)
+        if stateInfo is not None:
+            print("test!!!!!!!!!!!!!!!!!!!")
+            resetAI(stateInfo)
         return
-
-    # Spacebar
     if event.key == ' ':
-        step(env.actions.toggle, True)
+        stateInfo = stepManual(env.actions.toggle)
+        if stateInfo is not None:
+            resetAI(stateInfo)
         return
     if event.key == 'pageup':
-        step(env.actions.pickup, True)
+        stateInfo = stepManual(env.actions.pickup)
+        if stateInfo is not None:
+            resetAI(stateInfo)
         return
     if event.key == 'pagedown':
-        step(env.actions.drop, True)
+        stateInfo = stepManual(env.actions.drop)
+        if stateInfo is not None:
+            resetAI(stateInfo)
+        return
+    if event.key == 'enter':
+        stateInfo = stepManual(env.actions.done)
+        if stateInfo is not None:
+            resetAI(stateInfo)
         return
 
-    if event.key == 'enter':
-        step(env.actions.done, True)
-        return
 
 def saveState(env):
     door_x = env.door_pos[0]
@@ -178,47 +212,37 @@ parser.add_argument(
 )
 
 
-# MANUAL CONTROL
+# MANUAL CONTROL *********************
 args = parser.parse_args()
 env = gym.make(args.env)
 if args.agent_view:
     env = RGBImgPartialObsWrapper(env)
     env = ImgObsWrapper(env)
-
-# save details from the environment to be loaded later by the agent
-stateInfo = saveState(env)
 envOriginal = env
+# ************************************
 
-print("stateInfo:" + str(stateInfo))
 
 # Load the window
 window = Window('gym_minigrid - ' + args.env)
 window.reg_key_handler(key_handler)
 
+# Initialize
 uniqueStartStates = {}
-reset(True)
+stateInfo = resetManual()
 
 # Blocking event loop
 window.show(block=True)
 
 
-# AI AGENT
+# AI AGENT *******************************
 args.episodes = 1
 envs = []
 envs.append(envOriginal)
 env = ParallelEnv(envs)
-
-#load the saved state
-env = loadState(stateInfo, env)
+# ****************************************
 
 
-print("\n\n\n--------------------------")
-print("envOriginal.agent_pos:" + str(envOriginal.agent_pos))
-print("envOriginal.agent_dir:" + str(envOriginal.agent_dir))
-print("env.envs[0].agent_pos:" + str(env.envs[0].agent_pos))
-print("env.envs[0].agent_dir:" + str(env.envs[0].agent_dir))
-
-
+# Load the window
 window = Window('gym_minigrid - ' + args.env)
 
 # Load agent
@@ -228,12 +252,13 @@ agent = utils.Agent(env.observation_space, env.action_space, model_dir,
                     device=device, argmax=True, num_envs=1,
                     use_memory=False, use_text=False)
 
-reset(False)
-
-
+# Initialize
+resetAI(stateInfo)
 obss = [env.envs[0].gen_obs()]
-
 print("obs:"+str(obss))
+
+
+# Construct AI Replay
 prevAction = -1
 done = False
 frames = []
@@ -244,10 +269,64 @@ while not done:
     done = dones[0]
     print("actions:" + str(actions))
     print("done:"+str(done))
-frames.append(numpy.moveaxis(env.envs[0].render("rgb_array"), 2, 0))
 print("Saving gif... ", end="")
 write_gif(numpy.array(frames), "Results/AI_Playback/" + str(args.env) + "_" + str(args.model) + "_" + str(args.seed) + "_" + str(1) + "_actions.gif", fps=1/1)
 
-
 # Blocking event loop
 window.show(block=True)
+
+
+
+
+"""
+def reset(isManual, stateInfo=None):
+    if args.seed != -1:
+        env.seed(args.seed)
+
+    if int(args.episodes) > 0:
+        valid = False
+        while not valid:
+            if isManual:  
+                obs = env.reset(None)
+                if env.hash() not in uniqueStartStates.keys():
+                    valid = True
+                    uniqueStartStates[env.hash()] = True
+                    print("unique: " + str(uniqueStartStates))
+                    args.episodes = str(int(args.episodes) - 1)
+                    state = saveState(env)
+
+            else:
+                obs = env.envs[0].reset(None)
+                
+                # set the state of the environment
+                
+                env.envs[0].agent_pos = stateInfo["agent_pos"]
+                env.envs[0].agent_dir = stateInfo["agent_dir"]
+                print("setting direction to " + str(stateInfo["agent_dir"]))
+
+                env.envs[0].grid = stateInfo["envGrid"]
+                door_x = env.envs[0].door_pos[0]
+                door_y = env.envs[0].door_pos[1]
+                door = env.envs[0].grid.get(door_x, door_y)
+                door.is_locked = stateInfo["is_locked"]
+                door.is_open = stateInfo["is_open"]
+                env.envs[0].grid.set(door_x, door_y, door)
+            
+                print("env.hash(): " + str(env.envs[0].hash()))
+
+                if env.envs[0].hash() not in uniqueStartStates.keys():
+                    valid = True
+                    uniqueStartStates[env.envs[0].hash()] = True
+                    print("unique: " + str(uniqueStartStates))
+                    args.episodes = str(int(args.episodes) - 1)
+                
+        if hasattr(env, 'mission'):
+            print('Mission: %s' % env.mission)
+            window.set_caption(env.mission)
+
+        redraw(obs, isManual)
+        return obs
+    else:
+        window.close()
+        return None
+"""

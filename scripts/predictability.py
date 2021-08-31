@@ -13,7 +13,7 @@ from typing import Counter
 import utils
 
 
-def redraw(img, isManual):
+def redraw(env, img, isManual):
     if not args.agent_view:
         print("tile_size:"+str(args.tile_size))
         if isManual:
@@ -24,11 +24,12 @@ def redraw(img, isManual):
     window.show_img(img)
 
 
-def resetManual():
+def resetManual(env):
     if args.seed != -1:
         env.seed(args.seed)
 
-    if int(args.episodes) > 0:
+    print("EPISODES..." + str(args.episodes))
+    if int(args.episodes) > 1:
         valid = False
         while not valid:
             obs = env.reset(None)
@@ -38,15 +39,18 @@ def resetManual():
                 print("unique: " + str(uniqueStartStates))
                 args.episodes = str(int(args.episodes) - 1)
                 state = saveState(env)
-        redraw(obs, True)
+        redraw(env, obs, True)
         return state
 
-    else:
-        window.close()
-        return None
 
+def resetAI(stateInfo, env):
+    print("\n\nRESET AI********************\n\n")
 
-def resetAI(stateInfo):
+    envs = []
+    envs.append(env)
+    env = ParallelEnv(envs)
+    env = loadState(stateInfo, env)
+
     if args.seed != -1:
         env.seed(args.seed)
 
@@ -58,8 +62,11 @@ def resetAI(stateInfo):
         env.envs[0].agent_pos = stateInfo["agent_pos"]
         env.envs[0].agent_dir = stateInfo["agent_dir"]
 
-        redraw(obs, False)
-        return obs
+        redraw(env, obs, False)
+        print("RESETTING MANUAL...")
+        resetManual(env.envs[0])
+
+    return env
         
 """
 def step(action, isManual=False):
@@ -79,67 +86,93 @@ def step(action, isManual=False):
 
 def stepManual(action):
     obs, reward, done, info = env.step(action)
+    print("DONE: " + str(done))
     if done:
-        stateInfo = resetManual()
+        print("\nThis is some done text...\n")
+        #stateInfo = resetManual()
         return stateInfo
     else:
-        redraw(obs, True)
+        redraw(env, obs, True)
         return None
 
-
+"""
 def stepAI(action, stateInfo):
     obs, reward, done, info = env.step(action)
+    print("DONE: " + str(done))
     if done:
         resetAI(stateInfo)
     else:
-        redraw(obs, False)
-
+        redraw(env, obs, False)
+"""
 
 def key_handler(event):
     print('pressed', event.key)
     if event.key == 'escape':
         window.close()
         return
+    """
     if event.key == 'backspace':
         resetManual()
         return
+    """
     if event.key == 'left':
         stateInfo = stepManual(env.actions.left)
+        manualSteps = manualSteps + 1
+        print("\nPRESSED LEFT...\n")
         if stateInfo is not None:
-            resetAI(stateInfo)
+            window.close()
+            environment = resetAI(stateInfo, env)
+            writeAgentPlayback(environment)
         return
     if event.key == 'right':
         stateInfo = stepManual(env.actions.right)
+        print("\nPRESSED RIGHT...\n")
         if stateInfo is not None:
-            resetAI(stateInfo)
+            window.close()
+            environment = resetAI(stateInfo, env)
+            writeAgentPlayback(environment)
         return
     if event.key == 'up':
         stateInfo = stepManual(env.actions.forward)
+        print("\nPRESSED UP...\n") 
+        print("stateInfo: " + str(stateInfo))
         if stateInfo is not None:
-            print("test!!!!!!!!!!!!!!!!!!!")
-            resetAI(stateInfo)
+            print("DONE!!!")
+            window.close()
+            environment = resetAI(stateInfo, env)
+            writeAgentPlayback(environment)
         return
     if event.key == ' ':
         stateInfo = stepManual(env.actions.toggle)
+        print("\nPRESSED SPACE...\n")
         if stateInfo is not None:
-            resetAI(stateInfo)
+            window.close()
+            environment = resetAI(stateInfo, env)
+            writeAgentPlayback(environment)
         return
     if event.key == 'pageup':
         stateInfo = stepManual(env.actions.pickup)
+        print("\nPRESSED PAGEUP...\n")
         if stateInfo is not None:
-            resetAI(stateInfo)
+            window.close()
+            environment = resetAI(stateInfo, env)
+            writeAgentPlayback(environment)
         return
     if event.key == 'pagedown':
         stateInfo = stepManual(env.actions.drop)
+        print("\nPRESSED PAGEDOWN...\n")
         if stateInfo is not None:
-            resetAI(stateInfo)
+            window.close()
+            environment = resetAI(stateInfo, env)
+            writeAgentPlayback(environment)
         return
+    """
     if event.key == 'enter':
         stateInfo = stepManual(env.actions.done)
         if stateInfo is not None:
             resetAI(stateInfo)
         return
-
+    """
 
 def saveState(env):
     door_x = env.door_pos[0]
@@ -174,6 +207,23 @@ def loadState(state, env):
     door.is_open = state["is_open"]
     env.envs[0].grid.set(door_x, door_y, door)
     return env
+
+
+def writeAgentPlayback(env):
+    obss = [env.envs[0].gen_obs()]
+
+    # Construct AI Replay
+    prevAction = -1
+    done = False
+    frames = []
+    while not done:
+        actions = agent.get_actions(obss)
+        frames.append(numpy.moveaxis(env.envs[0].render("rgb_array"), 2, 0))
+        obss, rewards, dones, _ = env.step(actions)
+        done = dones[0]
+
+    print("Saving gif... ", end="")
+    write_gif(numpy.array(frames), "Results/AI_Playback/" + str(args.env) + "_" + str(args.model) + "_" + str(args.seed) + "_" + str(1) + "_actions.gif", fps=1/1)
 
 
 parser = argparse.ArgumentParser()
@@ -219,31 +269,6 @@ if args.agent_view:
     env = RGBImgPartialObsWrapper(env)
     env = ImgObsWrapper(env)
 envOriginal = env
-# ************************************
-
-
-# Load the window
-window = Window('gym_minigrid - ' + args.env)
-window.reg_key_handler(key_handler)
-
-# Initialize
-uniqueStartStates = {}
-stateInfo = resetManual()
-
-# Blocking event loop
-window.show(block=True)
-
-
-# AI AGENT *******************************
-args.episodes = 1
-envs = []
-envs.append(envOriginal)
-env = ParallelEnv(envs)
-# ****************************************
-
-
-# Load the window
-window = Window('gym_minigrid - ' + args.env)
 
 # Load agent
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -252,10 +277,36 @@ agent = utils.Agent(env.observation_space, env.action_space, model_dir,
                     device=device, argmax=True, num_envs=1,
                     use_memory=False, use_text=False)
 
+# Load the window (manual control)
+window = Window('gym_minigrid - ' + args.env)
+window.reg_key_handler(key_handler)
+
 # Initialize
-resetAI(stateInfo)
+uniqueStartStates = {}
+stateInfo = resetManual(env)
+manualSteps = 0
+aiSteps = 0
+
+# Blocking event loop
+window.show(block=True)
+
+
+# AI AGENT *******************************
+args.episodes = 2
+envs = []
+envs.append(envOriginal)
+env = ParallelEnv(envs)
+
+# Load the window
+window = Window('gym_minigrid - ' + args.env)
+
+
+# test playback
+#resetAI(stateInfo, env)
+#writeAgentPlayback(env)
+
+"""
 obss = [env.envs[0].gen_obs()]
-print("obs:"+str(obss))
 
 
 # Construct AI Replay
@@ -267,14 +318,13 @@ while not done:
     frames.append(numpy.moveaxis(env.envs[0].render("rgb_array"), 2, 0))
     obss, rewards, dones, _ = env.step(actions)
     done = dones[0]
-    print("actions:" + str(actions))
-    print("done:"+str(done))
+
 print("Saving gif... ", end="")
 write_gif(numpy.array(frames), "Results/AI_Playback/" + str(args.env) + "_" + str(args.model) + "_" + str(args.seed) + "_" + str(1) + "_actions.gif", fps=1/1)
 
 # Blocking event loop
 window.show(block=True)
-
+"""
 
 
 

@@ -15,7 +15,6 @@ import utils
 
 def redraw(env, img, isManual):
     if not args.agent_view:
-        print("tile_size:"+str(args.tile_size))
         if isManual:
             img = env.render('rgb_array', tile_size=args.tile_size)
         else:
@@ -24,26 +23,23 @@ def redraw(env, img, isManual):
     window.show_img(img)
 
 
-def resetManual(env):
+def resetManual(env): # returns a stateInfo dict
     if args.seed != -1:
         env.seed(args.seed)
 
-    print("EPISODES..." + str(args.episodes))
-    if int(args.episodes) > 1:
-        valid = False
-        while not valid:
-            obs = env.reset(None)
-            if env.hash() not in uniqueStartStates.keys():
-                valid = True
-                uniqueStartStates[env.hash()] = True
-                print("unique: " + str(uniqueStartStates))
-                args.episodes = str(int(args.episodes) - 1)
-                state = saveState(env)
-        redraw(env, obs, True)
-        return state
+    valid = False
+    while not valid:
+        obs = env.reset(None)
+        if env.hash() not in uniqueStartStates.keys():
+            valid = True
+            uniqueStartStates[env.hash()] = True
+            print("unique: " + str(uniqueStartStates))
+            state = saveState(env)
+    redraw(env, obs, True)
+    return state
 
 
-def resetAI(stateInfo, env):
+def resetAI(stateInfo, env): # returns a ParallelEnv
     print("\n\nRESET AI********************\n\n")
 
     envs = []
@@ -55,16 +51,16 @@ def resetAI(stateInfo, env):
         env.seed(args.seed)
 
     print("\n\nepisodes: " + str(args.episodes))
-    if int(args.episodes) > 0:
-        obs = env.envs[0].reset(None)
-            
-        # set the state of the environment
-        env.envs[0].agent_pos = stateInfo["agent_pos"]
-        env.envs[0].agent_dir = stateInfo["agent_dir"]
+    #if int(args.episodes) >= 0:
+    obs = env.envs[0].reset(None)
+        
+    # set the state of the environment
+    env.envs[0].agent_pos = stateInfo["agent_pos"]
+    env.envs[0].agent_dir = stateInfo["agent_dir"]
 
-        redraw(env, obs, False)
-        print("RESETTING MANUAL...")
-        resetManual(env.envs[0])
+    redraw(env, obs, False)
+    
+    #resetManual(env.envs[0])
 
     return env
         
@@ -84,12 +80,13 @@ def step(action, isManual=False):
         redraw(obs, isManual)
 """
 
-def stepManual(action):
+def stepManual(action): 
     obs, reward, done, info = env.step(action)
     print("DONE: " + str(done))
     if done:
         print("\nThis is some done text...\n")
         #stateInfo = resetManual()
+        print("stateInfo!!! " + str(stateInfo))
         return stateInfo
     else:
         redraw(env, obs, True)
@@ -121,17 +118,21 @@ def key_handler(event):
         print("\nPRESSED LEFT...\n")
         if stateInfo is not None:
             window.close()
+            env.seed(args.seed)
             environment = resetAI(stateInfo, env)
             writeAgentPlayback(environment)
         return
+
     if event.key == 'right':
         stateInfo = stepManual(env.actions.right)
         print("\nPRESSED RIGHT...\n")
         if stateInfo is not None:
             window.close()
+            env.seed(args.seed)
             environment = resetAI(stateInfo, env)
             writeAgentPlayback(environment)
         return
+
     if event.key == 'up':
         stateInfo = stepManual(env.actions.forward)
         print("\nPRESSED UP...\n") 
@@ -139,33 +140,42 @@ def key_handler(event):
         if stateInfo is not None:
             print("DONE!!!")
             window.close()
+            env.seed(args.seed)
             environment = resetAI(stateInfo, env)
             writeAgentPlayback(environment)
+            print("ARGS.EPISODS: " + str(args.episodes))
         return
+
     if event.key == ' ':
         stateInfo = stepManual(env.actions.toggle)
         print("\nPRESSED SPACE...\n")
         if stateInfo is not None:
             window.close()
+            env.seed(args.seed)
             environment = resetAI(stateInfo, env)
             writeAgentPlayback(environment)
         return
+
     if event.key == 'pageup':
         stateInfo = stepManual(env.actions.pickup)
         print("\nPRESSED PAGEUP...\n")
         if stateInfo is not None:
             window.close()
+            env.seed(args.seed)
             environment = resetAI(stateInfo, env)
             writeAgentPlayback(environment)
         return
+        
     if event.key == 'pagedown':
         stateInfo = stepManual(env.actions.drop)
         print("\nPRESSED PAGEDOWN...\n")
         if stateInfo is not None:
             window.close()
+            env.seed(args.seed)
             environment = resetAI(stateInfo, env)
             writeAgentPlayback(environment)
         return
+
     """
     if event.key == 'enter':
         stateInfo = stepManual(env.actions.done)
@@ -216,14 +226,17 @@ def writeAgentPlayback(env):
     prevAction = -1
     done = False
     frames = []
+    AI_STEPS = 0
     while not done:
+        AI_STEPS = AI_STEPS + 1
         actions = agent.get_actions(obss)
         frames.append(numpy.moveaxis(env.envs[0].render("rgb_array"), 2, 0))
         obss, rewards, dones, _ = env.step(actions)
         done = dones[0]
 
+    print("AI_STEPS: " + str(AI_STEPS))
     print("Saving gif... ", end="")
-    write_gif(numpy.array(frames), "Results/AI_Playback/" + str(args.env) + "_" + str(args.model) + "_" + str(args.seed) + "_" + str(1) + "_actions.gif", fps=1/1)
+    write_gif(numpy.array(frames), "Results/AI_Playback/" + str(args.env) + "_" + str(args.model) + "_" + str(args.seed) + "_" + str(args.episodes) + "_actions.gif", fps=1/1)
 
 
 parser = argparse.ArgumentParser()
@@ -277,28 +290,33 @@ agent = utils.Agent(env.observation_space, env.action_space, model_dir,
                     device=device, argmax=True, num_envs=1,
                     use_memory=False, use_text=False)
 
-# Load the window (manual control)
-window = Window('gym_minigrid - ' + args.env)
-window.reg_key_handler(key_handler)
 
-# Initialize
-uniqueStartStates = {}
-stateInfo = resetManual(env)
-manualSteps = 0
-aiSteps = 0
+for i in range(int(args.episodes)):
 
-# Blocking event loop
-window.show(block=True)
+    args.seed = args.seed + i*100 + 99
 
+    # Load the window (manual control)
+    window = Window('gym_minigrid - ' + args.env)
+    window.reg_key_handler(key_handler)
+  
+    # Initialize
+    uniqueStartStates = {}
 
-# AI AGENT *******************************
-args.episodes = 2
-envs = []
-envs.append(envOriginal)
-env = ParallelEnv(envs)
+    stateInfo = resetManual(env)
 
-# Load the window
-window = Window('gym_minigrid - ' + args.env)
+    # Blocking event loop
+    window.show(block=True)
+
+    args.episodes = str(int(args.episodes) - 1)
+
+    # AI AGENT *******************************
+    #args.episodes = 2
+    #envs = []
+    #envs.append(envOriginal)
+    #env = ParallelEnv(envs)
+
+    # Load the window
+    #window = Window('gym_minigrid - ' + args.env)
 
 
 # test playback

@@ -64,21 +64,6 @@ def resetAI(stateInfo, env): # returns a ParallelEnv
 
     return env
         
-"""
-def step(action, isManual=False):
-    obs, reward, done, info = env.step(action)
-    print('step=%s, reward=%.2f' % (env.step_count, reward))
-
-    if done:
-        print('done!')
-        if isManual:
-            resetManual()
-        else:
-            resetAI()
-        #reset(isManual)
-    else:
-        redraw(obs, isManual)
-"""
 
 def stepManual(action): 
     obs, reward, done, info = env.step(action)
@@ -92,15 +77,6 @@ def stepManual(action):
         redraw(env, obs, True)
         return None
 
-"""
-def stepAI(action, stateInfo):
-    obs, reward, done, info = env.step(action)
-    print("DONE: " + str(done))
-    if done:
-        resetAI(stateInfo)
-    else:
-        redraw(env, obs, False)
-"""
 
 def key_handler(event):
     print('pressed', event.key)
@@ -138,12 +114,10 @@ def key_handler(event):
         print("\nPRESSED UP...\n") 
         print("stateInfo: " + str(stateInfo))
         if stateInfo is not None:
-            print("DONE!!!")
             window.close()
             env.seed(args.seed)
             environment = resetAI(stateInfo, env)
             writeAgentPlayback(environment)
-            print("ARGS.EPISODS: " + str(args.episodes))
         return
 
     if event.key == ' ':
@@ -234,7 +208,12 @@ def writeAgentPlayback(env):
         obss, rewards, dones, _ = env.step(actions)
         done = dones[0]
 
-    print("AI_STEPS: " + str(AI_STEPS))
+    print("AI Steps: " + str(AI_STEPS))
+    #print("Manual Steps: " + str(manualSteps))
+    #difference = AI_STEPS - manualSteps
+    #print("Difference: " + str(difference))
+    message = "AI Steps: " + str(AI_STEPS) #+ ", Manual Steps: " + str(manualSteps) + ", Difference: " + str(difference)
+    print(message, file=open("Results/predictions/" + args.model + "_" + args.episodes + ".txt", "w"))
     print("Saving gif... ", end="")
     write_gif(numpy.array(frames), "Results/AI_Playback/" + str(args.env) + "_" + str(args.model) + "_" + str(args.seed) + "_" + str(args.episodes) + "_actions.gif", fps=1/1)
 
@@ -287,7 +266,7 @@ envOriginal = env
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model_dir = utils.get_model_dir(args.model)
 agent = utils.Agent(env.observation_space, env.action_space, model_dir,
-                    device=device, argmax=True, num_envs=1,
+                    device=device, argmax=False, num_envs=1,
                     use_memory=False, use_text=False)
 
 
@@ -308,93 +287,3 @@ for i in range(int(args.episodes)):
     window.show(block=True)
 
     args.episodes = str(int(args.episodes) - 1)
-
-    # AI AGENT *******************************
-    #args.episodes = 2
-    #envs = []
-    #envs.append(envOriginal)
-    #env = ParallelEnv(envs)
-
-    # Load the window
-    #window = Window('gym_minigrid - ' + args.env)
-
-
-# test playback
-#resetAI(stateInfo, env)
-#writeAgentPlayback(env)
-
-"""
-obss = [env.envs[0].gen_obs()]
-
-
-# Construct AI Replay
-prevAction = -1
-done = False
-frames = []
-while not done:
-    actions = agent.get_actions(obss)
-    frames.append(numpy.moveaxis(env.envs[0].render("rgb_array"), 2, 0))
-    obss, rewards, dones, _ = env.step(actions)
-    done = dones[0]
-
-print("Saving gif... ", end="")
-write_gif(numpy.array(frames), "Results/AI_Playback/" + str(args.env) + "_" + str(args.model) + "_" + str(args.seed) + "_" + str(1) + "_actions.gif", fps=1/1)
-
-# Blocking event loop
-window.show(block=True)
-"""
-
-
-
-"""
-def reset(isManual, stateInfo=None):
-    if args.seed != -1:
-        env.seed(args.seed)
-
-    if int(args.episodes) > 0:
-        valid = False
-        while not valid:
-            if isManual:  
-                obs = env.reset(None)
-                if env.hash() not in uniqueStartStates.keys():
-                    valid = True
-                    uniqueStartStates[env.hash()] = True
-                    print("unique: " + str(uniqueStartStates))
-                    args.episodes = str(int(args.episodes) - 1)
-                    state = saveState(env)
-
-            else:
-                obs = env.envs[0].reset(None)
-                
-                # set the state of the environment
-                
-                env.envs[0].agent_pos = stateInfo["agent_pos"]
-                env.envs[0].agent_dir = stateInfo["agent_dir"]
-                print("setting direction to " + str(stateInfo["agent_dir"]))
-
-                env.envs[0].grid = stateInfo["envGrid"]
-                door_x = env.envs[0].door_pos[0]
-                door_y = env.envs[0].door_pos[1]
-                door = env.envs[0].grid.get(door_x, door_y)
-                door.is_locked = stateInfo["is_locked"]
-                door.is_open = stateInfo["is_open"]
-                env.envs[0].grid.set(door_x, door_y, door)
-            
-                print("env.hash(): " + str(env.envs[0].hash()))
-
-                if env.envs[0].hash() not in uniqueStartStates.keys():
-                    valid = True
-                    uniqueStartStates[env.envs[0].hash()] = True
-                    print("unique: " + str(uniqueStartStates))
-                    args.episodes = str(int(args.episodes) - 1)
-                
-        if hasattr(env, 'mission'):
-            print('Mission: %s' % env.mission)
-            window.set_caption(env.mission)
-
-        redraw(obs, isManual)
-        return obs
-    else:
-        window.close()
-        return None
-"""

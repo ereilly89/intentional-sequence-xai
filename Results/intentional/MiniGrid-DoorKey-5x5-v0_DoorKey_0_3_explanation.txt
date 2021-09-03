@@ -1,2 +1,0 @@
-The agent starts pointed up and is carrying the key. 
-Then, the agent turns right to see the goal. 

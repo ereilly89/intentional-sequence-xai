@@ -6,6 +6,7 @@ import gym_minigrid
 from gym_minigrid.window import Window
 from gym_minigrid.wrappers import *
 import numpy
+import os.path
 import time
 import torch
 from torch_ac.utils.penv import ParallelEnv
@@ -212,8 +213,8 @@ def writeAgentPlayback(env):
     #print("Manual Steps: " + str(manualSteps))
     #difference = AI_STEPS - manualSteps
     #print("Difference: " + str(difference))
-    message = "AI Steps: " + str(AI_STEPS) #+ ", Manual Steps: " + str(manualSteps) + ", Difference: " + str(difference)
-    print(message, file=open("Results/predictions/" + args.model + "_" + args.episodes + ".txt", "w"))
+    message = args.model + ", " + "<predicted>, " + str(AI_STEPS) #+ ", Manual Steps: " + str(manualSteps) + ", Difference: " + str(difference)
+    print(message, file=open("Results/evaluation/evaluation.txt", "a"))
     print("Saving gif... ", end="")
     write_gif(numpy.array(frames), "Results/AI_Playback/" + str(args.env) + "_" + str(args.model) + "_" + str(args.seed) + "_" + str(args.episodes) + "_actions.gif", fps=1/1)
 
@@ -269,6 +270,8 @@ agent = utils.Agent(env.observation_space, env.action_space, model_dir,
                     device=device, argmax=False, num_envs=1,
                     use_memory=False, use_text=False)
 
+if not os.path.isfile("Results/evaluation/evaluation.txt"):
+    print("model, prediction, actual", file=open("Results/evaluation/evaluation.txt", "w+"))
 
 for i in range(int(args.episodes)):
 

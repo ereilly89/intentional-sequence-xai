@@ -124,7 +124,7 @@ def getRandomSequence(currState, MDP, reverse, seqLen):
 
 
 
-def buildSequences(graph, reverseGraph, threshold, budget):
+def buildSequences(graph, reverseGraph, threshold, budget, model):
 
     print("building sequences...")
 
@@ -158,7 +158,7 @@ def buildSequences(graph, reverseGraph, threshold, budget):
     intents = dict(intentTuple)
 
     intentionalities = {}
-    os.remove("Results/intentional/intentionality.txt")
+    os.remove("Results/intentional/" + model + "/intentionality.txt")
 
     print("parsing through states in order of intentionality...")
     # Parse through each state from highest to lowest intent, extract the intentional sequences
@@ -184,12 +184,12 @@ def buildSequences(graph, reverseGraph, threshold, budget):
             break
     
     for intent in intentionalities.keys():
-        print(str(intent) + ": " + str(intentionalities[intent]), file=open("Results/intentional/intentionality.txt", "a"))
+        print(str(intent) + ": " + str(intentionalities[intent]), file=open("Results/intentional/" + model + "/intentionality.txt", "a"))
     
     return sequences
 
 
-def buildRandomSequences(graph, reverseGraph, sequences):
+def buildRandomSequences(graph, reverseGraph, sequences, model):
     # generate random sequences of the same size as the intentional ones
     print("building random sequences...")
     def getSequenceIntentionality(sequence):
@@ -235,7 +235,7 @@ def buildRandomSequences(graph, reverseGraph, sequences):
         val = {}
         val["sequence"] = sequence
         val["intentionality"] = getSequenceIntentionality(sequence)
-        os.remove("Results/random/random_intentionality.txt")
+        os.remove("Results/random/" + model + "/random_intentionality.txt")
 
         intentionalities[count] = val["intentionality"]
         randomSequences[count] = val
@@ -245,6 +245,6 @@ def buildRandomSequences(graph, reverseGraph, sequences):
         #iters = iters + 1
 
         for intent in intentionalities.keys():
-            print(str(intent) + ": " + str(intentionalities[intent]), file=open("Results/random/random_intentionality.txt", "a"))
+            print(str(intent) + ": " + str(intentionalities[intent]), file=open("Results/random/" + model + "/random_intentionality.txt", "a"))
 
     return randomSequences

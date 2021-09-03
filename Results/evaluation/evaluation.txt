@@ -1,0 +1,11 @@
+model, prediction, actual
+Model_A, <predicted>, 7
+Model_A, <predicted>, 22
+Model_A, <predicted>, 32
+Model_A, <predicted>, 14
+Model_A, <predicted>, 17
+Model_B, <predicted>, 20
+Model_B, <predicted>, 52
+Model_B, <predicted>, 36
+Model_B, <predicted>, 43
+Model_B, <predicted>, 27

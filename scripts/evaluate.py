@@ -10,24 +10,6 @@ import os
 from scripts.intentions_RL import getIntentionalStates, buildSequences, buildRandomSequences
 from scripts.visualize_sequences import visualize
 
-"""
-def getHash(state):
-    #print("image hash:"+str(hash((hashlib.sha1(state["image"])))))
-    #print("getting stateID...")
-    #print("image"+str(state["image"]))
-    #print("hash:"+str(hashlib.sha1(state["image"])))
-    ndarray = state["image"]
-    #print("array:"+str(ndarray))
-    stateID = ""
-    for i in range(len(ndarray)):
-        for j in range(len(ndarray[i])):
-            for k in range(len(ndarray[i][j])):
-                #print(stateID)
-                stateID = stateID + str(ndarray[i][j][k])
-    stateID = str(hash(stateID)) + "_kx" + str(state["key_x"]) + "_ky" + str(state["key_y"]) + "_dx"+ str(state["door_x"]) + "_dy"+ str(state["door_y"]) + "_dir" + str(state["direction"]) + "_x" + str(state["agent_x"]) + "_y" + str(state["agent_y"])
-    print("returned stateID " + stateID)
-    return str(stateID) #str(hash(stateID)) #str(hash((hashlib.sha1(state["image"]), state["direction"]))) #.hexdigest()
-"""
 
 def main():
     print("main...")
@@ -252,14 +234,14 @@ def main():
     print(graph, file=open("graph.txt", "w"))
 
     #construct and visualize the intentional sequences
-    sequences = buildSequences(graph, reverseGraph, 0, 10)
-    gifFilename =  "Results/intentional/" + str(args.env) + "_" + str(args.model) + "_" + str(args.seed) + "_"
+    sequences = buildSequences(graph, reverseGraph, 0, 10, args.model)
+    gifFilename =  "Results/intentional/" + str(args.model) + "/" + str(args.env) + "_" + str(args.seed) + "_"
     visualize(sequences, images, envMap, args.env, args.model, args.argmax, args.seed, args.memory, "", args.episodes, 1, gifFilename, model_dir, agent, statesInfo)
 
     #construct and visualize the random sequences
-    # randomSequences = buildRandomSequences(graph, reverseGraph, sequences)
-    # rdmFilename = "Results/random/" + str(args.env) + "_" + str(args.model) + "_" + str(args.seed) + "_Random"
-    # visualize(randomSequences, images, envMap, args.env, args.model, args.argmax, args.seed, args.memory, "", args.episodes, 1, rdmFilename, model_dir, agent, statesInfo)
+    randomSequences = buildRandomSequences(graph, reverseGraph, sequences, args.model)
+    rdmFilename = "Results/random/" + str(args.model) + "/" + str(args.env) + "_" + str(args.seed) + "_Random"
+    visualize(randomSequences, images, envMap, args.env, args.model, args.argmax, args.seed, args.memory, "", args.episodes, 1, rdmFilename, model_dir, agent, statesInfo)
 
     end_time = time.time()
 

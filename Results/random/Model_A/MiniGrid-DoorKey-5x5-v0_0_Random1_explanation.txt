@@ -1,0 +1,5 @@
+The agent starts pointed down. 
+Then, the agent turns right to see the key. 
+Then, the agent turns right to see the door. 
+Then, the agent turns right. 
+Then, the agent drops the key. 

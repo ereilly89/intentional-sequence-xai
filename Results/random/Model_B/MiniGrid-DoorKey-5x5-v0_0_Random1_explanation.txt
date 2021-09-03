@@ -1,0 +1,2 @@
+The agent starts pointed left, with the yellow key in sight. 
+Then, the agent opens the door. 

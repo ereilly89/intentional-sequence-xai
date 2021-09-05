@@ -1,5 +1,9 @@
-The agent starts pointed down. 
-Then, the agent turns right to see the key. 
-Then, the agent turns right to see the door. 
+The agent starts pointed up, with the yellow key and yellow door in sight. 
+Then, the agent moves forward. 
+Then, the agent picks up the key. 
+Then, the agent moves forward. 
 Then, the agent turns right. 
-Then, the agent drops the key. 
+Then, the agent opens the door to see the goal. 
+Then, the agent moves forward. 
+Then, the agent moves forward. 
+Then, the agent turns right. 

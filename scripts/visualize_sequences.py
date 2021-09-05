@@ -9,7 +9,7 @@ import utils
 import os
 from os.path import exists
 from array2gif import write_gif
-from gym_minigrid.minigrid import Door
+from gym_minigrid.minigrid import Door, Key
 
 
 def visualize(sequences, images, envMap, environment, model, argmax, seed, memory, text, episodes, pause, gif, model_dir, agent, statesInfo):
@@ -68,61 +68,79 @@ def visualize(sequences, images, envMap, environment, model, argmax, seed, memor
                 actions.append(int(x[1:]))
         return actions
 
+
+    def loadState(state, env):
+
+        # set agent position and direction
+        env.agent_pos = state["agent_pos"]
+        env.agent_dir = state["agent_dir"]
+
+        #set the env? delete?
+        env.grid = state["envGrid"]
+
+        # set door
+        door_x = env.door_pos[0]
+        door_y = env.door_pos[1]
+        door = env.grid.get(door_x, door_y)
+        door.is_locked = state["is_locked"]
+        door.is_open = state["is_open"]
+        env.grid.set(door_x, door_y, door)
+
+        # set the key
+        key_x = env.key_pos[0]
+        key_y = env.key_pos[1]
+        env.carrying = state["carrying"]
+
+        if env.carrying is not None:
+            env.grid.set(key_x, key_y, None)
+        else:
+            key = Key("yellow")
+            env.grid.set(key_x, key_y, key)
+        return env
+
+
     def explain(sequence, s):
         frames = []
         description = []
         actions = getActionSequence(sequence)
-
+        
         explainFile = gif + str(s) + "_explanation.txt"
         if exists(explainFile):
             os.remove(explainFile) 
 
         startState = getStartState(sequence)
         env = envMap[startState]
+
         envHash = ""
-        
-        env = envMap[getStartState(sequence)]
-        stateInfo = statesInfo[getStartState(sequence)]
-
-        env.agent_pos = stateInfo["agent_pos"]
-        env.agent_dir = stateInfo["agent_dir"]
-        env.grid = stateInfo["envGrid"]
-
-        door_x = env.door_pos[0]
-        door_y = env.door_pos[1]
-        door = env.grid.get(door_x, door_y)
-        door.is_locked = stateInfo["is_locked"]
-        door.is_open = stateInfo["is_open"]
-        env.grid.set(door_x, door_y, door)
-
+        stateInfo = statesInfo[startState]
+        #env.seed(stateInfo["seed"][0])
+        env = loadState(stateInfo, env)
+       
+        if env.carrying is not None:
+            print(str(True))
+        else:
+            print(str(False))
 
         envHash = env.hash()
-        #door = new Door() stateInfo["door_is_open"]
-        #env.grid.set(env, env.door_pos[0], env.door_pos[1], door)
+
+       
+        #if startState == "a83021da76b200f9":
+        print("\n\nexpected state ("+str(startState) + "): " + str(statesInfo[startState]))
+        print("\nactual state (" + envHash + "): " + str(statesInfo[envHash]) + "\n\n")
+        
+        if startState != envHash:
+            raise Exception("hash mismatch error.")
 
         obs, reward, done, _ = env.step(0)
         obs, reward, done, _ = env.step(1)
 
-        env = envMap[getStartState(sequence)]
-        stateInfo = statesInfo[getStartState(sequence)]
+        env = envMap[startState]
+        stateInfo = statesInfo[startState]
 
         env.agent_pos = stateInfo["agent_pos"]
         env.agent_dir = stateInfo["agent_dir"]
 
-       
-        # env.grid = stateInfo["envGrid"]
-
         sentence = "The agent starts pointed " + str(TO_DIR[env.agent_dir])
-
-        print("agent dir, env: " + str(env.agent_dir))
-        print("grid.encode().tolist(), env: " + str(env.grid.encode().tolist()))
-        print("agent pos: " + str(env.agent_pos))
-        print("agent dir: " + str(env.agent_dir))
-        print("key pos: " + str(env.key_pos))
-        print("door pos: " + str(env.door_pos))
-        print("carrying: " + str(env.carrying)) #might have to change
-
-        print("stateInfo: " + str(stateInfo))
 
         gridList = obs["image"] # env.grid.encode().tolist()
         count = 0

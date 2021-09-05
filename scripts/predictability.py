@@ -91,7 +91,7 @@ def key_handler(event):
     """
     if event.key == 'left':
         stateInfo = stepManual(env.actions.left)
-        manualSteps = manualSteps + 1
+        count["count"] = count["count"] + 1
         print("\nPRESSED LEFT...\n")
         if stateInfo is not None:
             window.close()
@@ -102,6 +102,7 @@ def key_handler(event):
 
     if event.key == 'right':
         stateInfo = stepManual(env.actions.right)
+        count["count"] = count["count"] + 1
         print("\nPRESSED RIGHT...\n")
         if stateInfo is not None:
             window.close()
@@ -112,6 +113,7 @@ def key_handler(event):
 
     if event.key == 'up':
         stateInfo = stepManual(env.actions.forward)
+        count["count"] = count["count"] + 1
         print("\nPRESSED UP...\n") 
         print("stateInfo: " + str(stateInfo))
         if stateInfo is not None:
@@ -123,6 +125,7 @@ def key_handler(event):
 
     if event.key == ' ':
         stateInfo = stepManual(env.actions.toggle)
+        count["count"] = count["count"] + 1
         print("\nPRESSED SPACE...\n")
         if stateInfo is not None:
             window.close()
@@ -133,6 +136,7 @@ def key_handler(event):
 
     if event.key == 'pageup':
         stateInfo = stepManual(env.actions.pickup)
+        count["count"] = count["count"] + 1
         print("\nPRESSED PAGEUP...\n")
         if stateInfo is not None:
             window.close()
@@ -143,6 +147,7 @@ def key_handler(event):
         
     if event.key == 'pagedown':
         stateInfo = stepManual(env.actions.drop)
+        count["count"] = count["count"] + 1
         print("\nPRESSED PAGEDOWN...\n")
         if stateInfo is not None:
             window.close()
@@ -213,8 +218,8 @@ def writeAgentPlayback(env):
     #print("Manual Steps: " + str(manualSteps))
     #difference = AI_STEPS - manualSteps
     #print("Difference: " + str(difference))
-    message = args.model + ", " + "<predicted>, " + str(AI_STEPS) #+ ", Manual Steps: " + str(manualSteps) + ", Difference: " + str(difference)
-    print(message, file=open("Results/evaluation/evaluation.txt", "a"))
+    message = args.model + ", " + str(count["count"]) + ", " + str(AI_STEPS) #+ ", Manual Steps: " + str(manualSteps) + ", Difference: " + str(difference)
+    print(message, file=open("Results/evaluation.csv", "a"))
     print("Saving gif... ", end="")
     write_gif(numpy.array(frames), "Results/AI_Playback/" + str(args.env) + "_" + str(args.model) + "_" + str(args.seed) + "_" + str(args.episodes) + "_actions.gif", fps=1/1)
 
@@ -270,8 +275,8 @@ agent = utils.Agent(env.observation_space, env.action_space, model_dir,
                     device=device, argmax=False, num_envs=1,
                     use_memory=False, use_text=False)
 
-if not os.path.isfile("Results/evaluation/evaluation.txt"):
-    print("model, prediction, actual", file=open("Results/evaluation/evaluation.txt", "w+"))
+if not os.path.isfile("Results/evaluation.csv"):
+    print("model, prediction, actual", file=open("Results/evaluation.csv", "w+"))
 
 for i in range(int(args.episodes)):
 
@@ -283,6 +288,8 @@ for i in range(int(args.episodes)):
   
     # Initialize
     uniqueStartStates = {}
+    count = {}
+    count["count"] = 0
 
     stateInfo = resetManual(env)
 

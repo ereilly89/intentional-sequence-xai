@@ -95,7 +95,50 @@ def main():
         actions = agent.get_actions(obss)
 
         startEnvStateID = env.envs[0].hash()
+        envBeforeAction = env.envs[0]
         print("startEnvStateID = " + startEnvStateID)
+
+
+        if startEnvStateID not in images.keys():
+            images[startEnvStateID] = keys[0] 
+
+        if startEnvStateID not in envMap.keys():
+            envMap[startEnvStateID] = copy.deepcopy(env.envs[0])  # print(print("copy:"+str(copy.deepcopy(env.unwrapped.clone_full_state())))) #copy.deepcopy(env)
+            #print("deep copy!!!"+ str(envMap[stateIndex]))
+
+        if startEnvStateID not in statesInfo.keys():
+
+            #get the is_locked and is_open attributes of Door
+            #and set them in the info dict below
+            door_x = env.envs[0].door_pos[0]
+            door_y = env.envs[0].door_pos[1]
+            door = env.envs[0].grid.get(door_x, door_y)
+
+            print("door_x: " + str(door_x))
+            print("door_y" + str(door_y))
+            print("door:" + str(door))
+            print("door.is_locked" + str(door.is_locked))
+            print("door.is_open" + str(door.is_open))
+            print("seed!:"+str(env.envs[i].theSeed))
+            info = {
+                "grid": env.envs[0].grid,
+                "seed": env.envs[0].theSeed,
+                "grid_encoding": env.envs[0].grid.encode().tolist(),
+                "envGrid": env.envs[0].grid.copy(),
+                "splitIdx": env.envs[0].splitIdx,
+                "doorIdx": env.envs[0].doorIdx,
+                "door_pos": env.envs[0].door_pos,
+                "key_pos": env.envs[0].key_pos,
+                "agent_pos": env.envs[0].agent_pos,
+                "agent_dir": env.envs[0].agent_dir,
+                "carrying": env.envs[0].carrying,
+                "step_count": env.envs[0].step_count,
+                "is_locked": door.is_locked,
+                "is_open": door.is_open
+            }
+            statesInfo[startEnvStateID] = info
+
+        
 
         obss, rewards, dones, _ = env.step(actions)
 
@@ -119,44 +162,13 @@ def main():
             value = {"obs":    endIndex,
                      "reward": rewards[i]}
            
-            if stateIndex not in images.keys():
-                images[stateIndex] = keys[i] 
-
-            if stateIndex not in envMap.keys():
-                envMap[stateIndex] = copy.deepcopy(env.envs[i])  # print(print("copy:"+str(copy.deepcopy(env.unwrapped.clone_full_state())))) #copy.deepcopy(env)
-                #print("deep copy!!!"+ str(envMap[stateIndex]))
-
-            if stateIndex not in statesInfo.keys():
-
-                #get the is_locked and is_open attributes of Door
-                #and set them in the info dict below
-                door_x = env.envs[i].door_pos[0]
-                door_y = env.envs[i].door_pos[1]
-                door = env.envs[i].grid.get(door_x, door_y)
-
-                print("door_x: " + str(door_x))
-                print("door_y" + str(door_y))
-                print("door:" + str(door))
-                print("door.is_locked" + str(door.is_locked))
-                print("door.is_open" + str(door.is_open))
-
-                info = {
-                    "grid": env.envs[i].grid,
-                    "grid_encoding": env.envs[i].grid.encode().tolist(),
-                    "envGrid": env.envs[i].grid.copy(),
-                    "splitIdx": env.envs[i].splitIdx,
-                    "doorIdx": env.envs[i].doorIdx,
-                    "door_pos": env.envs[i].door_pos,
-                    "key_pos": env.envs[i].key_pos,
-                    "agent_pos": env.envs[i].agent_pos,
-                    "agent_dir": env.envs[i].agent_dir,
-                    "carrying": env.envs[i].carrying,
-                    "step_count": env.envs[i].step_count,
-                    "is_locked": door.is_locked,
-                    "is_open": door.is_open
-                }
-                statesInfo[stateIndex] = info
-
+            """
+            if stateIndex == "a83021da76b200f9":
+                print("\n\n\nFOUND IT****\n\n")
+                print(str(statesInfo[stateIndex]))
+                raise Exception("TEST")
+            """
+                
             # graph
             if stateIndex in graph.keys():
                
@@ -239,36 +251,9 @@ def main():
     visualize(sequences, images, envMap, args.env, args.model, args.argmax, args.seed, args.memory, "", args.episodes, 1, gifFilename, model_dir, agent, statesInfo)
 
     #construct and visualize the random sequences
-    randomSequences = buildRandomSequences(graph, reverseGraph, sequences, args.model)
-    rdmFilename = "Results/random/" + str(args.model) + "/" + str(args.env) + "_" + str(args.seed) + "_Random"
-    visualize(randomSequences, images, envMap, args.env, args.model, args.argmax, args.seed, args.memory, "", args.episodes, 1, rdmFilename, model_dir, agent, statesInfo)
-
-    end_time = time.time()
-
-    # Print logs
-    """
-    num_frames = sum(logs["num_frames_per_episode"])
-    fps = num_frames/(end_time - start_time)
-    duration = int(end_time - start_time)
-    return_per_episode = utils.synthesize(logs["return_per_episode"])
-    num_frames_per_episode = utils.synthesize(logs["num_frames_per_episode"])
-
-    print("F {} | FPS {:.0f} | D {} | R:μσmM {:.2f} {:.2f} {:.2f} {:.2f} | F:μσmM {:.1f} {:.1f} {} {}"
-        .format(num_frames, fps, duration,
-                *return_per_episode.values(),
-                *num_frames_per_episode.values()))
-    """
-
-    # Print worst episodes
-    """
-    n = args.worst_episodes_to_show
-    if n > 0:
-        print("\n{} worst episodes:".format(n))
-
-        indexes = sorted(range(len(logs["return_per_episode"])), key=lambda k: logs["return_per_episode"][k])
-        for i in indexes[:n]:
-            print("- episode {}: R={}, F={}".format(i, logs["return_per_episode"][i], logs["num_frames_per_episode"][i]))
-    """
+    #randomSequences = buildRandomSequences(graph, reverseGraph, sequences, args.model)
+    #rdmFilename = "Results/random/" + str(args.model) + "/" + str(args.env) + "_" + str(args.seed) + "_Random"
+    #visualize(randomSequences, images, envMap, args.env, args.model, args.argmax, args.seed, args.memory, "", args.episodes, 1, rdmFilename, model_dir, agent, statesInfo)
 
 if __name__ == '__main__':
     main()

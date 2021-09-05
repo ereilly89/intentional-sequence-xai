@@ -1,2 +1,2 @@
-The agent starts pointed up, with the yellow door in sight and is carrying the key. 
-Then, the agent moves forward. 
+The agent starts pointed down, with the yellow door in sight and is carrying the key. 
+Then, the agent turns left. 

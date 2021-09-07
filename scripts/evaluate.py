@@ -126,6 +126,7 @@ def main():
                 "grid_encoding": env.envs[0].grid.encode().tolist(),
                 "envGrid": env.envs[0].grid.copy(),
                 "splitIdx": env.envs[0].splitIdx,
+                "goal_pos": env.envs[0].goal_pos,
                 "doorIdx": env.envs[0].doorIdx,
                 "door_pos": env.envs[0].door_pos,
                 "key_pos": env.envs[0].key_pos,
@@ -138,9 +139,20 @@ def main():
             }
             statesInfo[startEnvStateID] = info
 
+            print("info['agent_pos'][0]: " + str(info["agent_pos"][0]))
+            print("info['agent_pos'][1]: " + str(info["agent_pos"][1]) + "\n")
+            print("info['goal_pos'][0]: " + str(info["goal_pos"][0]))
+            print("info['goal_pos'][1]: " + str(info["goal_pos"][1]) + "\n")
+            #raise Exception("meh.")
+            #if info["agent_pos"][0] == info["goal_pos"][0] and info["agent_pos"][1] == info["goal_pos"][1]:
+            #    raise Exception("REACHED GOAL.")
+
         
 
         obss, rewards, dones, _ = env.step(actions)
+        
+        if dones[0] == True:
+            continue
 
         print("actionID = " + str(actions[0]))
 
@@ -159,18 +171,27 @@ def main():
             endIndex = endEnvStateID #getHash(obss[i])
 
             actionIndex = actions[i]
+
             value = {"obs":    endIndex,
                      "reward": rewards[i]}
            
+    
+            
+            startState = statesInfo[stateIndex]
+            print(str(startState))
+           # raise Exception("stop")
+
             """
-            if stateIndex == "a83021da76b200f9":
-                print("\n\n\nFOUND IT****\n\n")
-                print(str(statesInfo[stateIndex]))
-                raise Exception("TEST")
+            endEnv = env.envs[0]
+            isValid = True
+            if endEnv.agent_pos[0] == endEnv.goal_pos[0] and endEnv.agent_pos[1] == endEnv.goal_pos[1]:
+                isValid = False
+                raise Exception("stop")
             """
-                
+
+
             # graph
-            if stateIndex in graph.keys():
+            if stateIndex in graph.keys() :
                
                 edges = graph[stateIndex] 
                
@@ -214,7 +235,7 @@ def main():
         log_episode_return *= mask
         log_episode_num_frames *= mask
 
-
+    #raise Exception("just an exception, get rid of later")
     
 
     # convert frequencies to probabilities
@@ -251,9 +272,9 @@ def main():
     visualize(sequences, images, envMap, args.env, args.model, args.argmax, args.seed, args.memory, "", args.episodes, 1, gifFilename, model_dir, agent, statesInfo)
 
     #construct and visualize the random sequences
-    #randomSequences = buildRandomSequences(graph, reverseGraph, sequences, args.model)
-    #rdmFilename = "Results/random/" + str(args.model) + "/" + str(args.env) + "_" + str(args.seed) + "_Random"
-    #visualize(randomSequences, images, envMap, args.env, args.model, args.argmax, args.seed, args.memory, "", args.episodes, 1, rdmFilename, model_dir, agent, statesInfo)
+    randomSequences = buildRandomSequences(graph, reverseGraph, sequences, args.model)
+    rdmFilename = "Results/random/" + str(args.model) + "/" + str(args.env) + "_" + str(args.seed) + "_Random"
+    visualize(randomSequences, images, envMap, args.env, args.model, args.argmax, args.seed, args.memory, "", args.episodes, 1, rdmFilename, model_dir, agent, statesInfo)
 
 if __name__ == '__main__':
     main()

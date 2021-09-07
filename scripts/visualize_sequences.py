@@ -42,7 +42,7 @@ def visualize(sequences, images, envMap, environment, model, argmax, seed, memor
         2: "moves forward",
         3: "picks up the key",
         4: "drops the key",
-        5: "opens the door",
+        5: "toggles the door",
         6: "is done"
     }
 
@@ -76,7 +76,7 @@ def visualize(sequences, images, envMap, environment, model, argmax, seed, memor
         env.agent_dir = state["agent_dir"]
 
         #set the env? delete?
-        env.grid = state["envGrid"]
+        #env.grid = state["envGrid"]
 
         # set door
         door_x = env.door_pos[0]
@@ -123,22 +123,26 @@ def visualize(sequences, images, envMap, environment, model, argmax, seed, memor
 
         envHash = env.hash()
 
+        if startState != envHash:
+            print("stateInfo: " + str(stateInfo))
+            print("envHash: " + str(envHash))
+            raise Exception("mismatch exception 1")
        
         #if startState == "a83021da76b200f9":
         print("\n\nexpected state ("+str(startState) + "): " + str(statesInfo[startState]))
         print("\nactual state (" + envHash + "): " + str(statesInfo[envHash]) + "\n\n")
-        
-        if startState != envHash:
-            raise Exception("hash mismatch error.")
 
         obs, reward, done, _ = env.step(0)
         obs, reward, done, _ = env.step(1)
 
         env = envMap[startState]
         stateInfo = statesInfo[startState]
+        env = loadState(stateInfo, env)
 
-        env.agent_pos = stateInfo["agent_pos"]
-        env.agent_dir = stateInfo["agent_dir"]
+        if startState != envHash:
+            print("stateInfo: " + str(stateInfo))
+            print("envHash: " + str(envHash))
+            raise Exception("mismatch exception 2")
 
         sentence = "The agent starts pointed " + str(TO_DIR[env.agent_dir])
 

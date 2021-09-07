@@ -1,5 +1,2 @@
-The agent starts pointed left, with the yellow key in sight. 
-Then, the agent turns left. 
-Then, the agent picks up the key. 
-Then, the agent turns right. 
-Then, the agent turns right to see the door. 
+The agent starts pointed down. 
+Then, the agent turns left to see the door and key. 

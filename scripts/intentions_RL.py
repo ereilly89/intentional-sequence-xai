@@ -59,9 +59,7 @@ def getSequence(state, MDP, intentStates, reverse, threshold):
 
             if maxState not in visited.keys() and maxState != -1:
                 queue.append(maxState)
-
-               # if count == 0: 
-                 #   visited[currState] = True                   
+              
                 if reverse:
                     sequence.insert(0, "a" + str(maxAction))
                     sequence.insert(0, "s" + str(maxState))
@@ -70,16 +68,6 @@ def getSequence(state, MDP, intentStates, reverse, threshold):
                     sequence.append("s" + str(maxState))
 
                 count = count + 1
-                
-                
-                """
-                if reverse:
-                    sequence.insert(0, "a" + str(maxAction))
-                    sequence.insert(0, "s" + str(maxState))
-                else:
-                    sequence.append("a" +  str(maxAction))
-                    sequence.append("s" + str(maxState))
-                """
 
                 visited[maxState] = True #visited[currState] = True
         else:
@@ -106,22 +94,16 @@ def getRandomSequence(currState, MDP, reverse, seqLen):
             if state not in visited.keys():
                 queue.append(state)
             
-            print("")
             if reverse:
                 sequence.insert(0, "a" + str(actionIndex))
                 sequence.insert(0, "s" + str(state))
             else:
                 sequence.append("a" + str(actionIndex))
                 sequence.append("s" + str(state))
-            print("len(sequence): " + str(len(sequence)))
-            print("seqLen: " + str(seqLen))
         else:
             print("something went wrong.")
-        
+
     return sequence
-
-
-
 
 
 def buildSequences(graph, reverseGraph, threshold, budget, model):
@@ -215,11 +197,10 @@ def buildRandomSequences(graph, reverseGraph, sequences, model):
             sequence = ["s" + str(startState)]
 
             print("\n\nrandomly parsing future states...")
-            print("sequences[s]:" + str(sequences[s]["sequence"]))
-            print("len(sequences[s]['sequence']):" + str(len(sequences[s]['sequence'])))
+            #print("sequences[s]:" + str(sequences[s]["sequence"]))
+            #print("len(sequences[s]['sequence']):" + str(len(sequences[s]['sequence'])))
             future = getRandomSequence(startState, graph, False, len(sequences[s]["sequence"])-1)
             context = []
-            print("len(future):"+str(len(future)))
             
             if len(future) != len(sequences[s]["sequence"]) - 1:
                 print("randomly parsing context states...")
@@ -230,7 +211,12 @@ def buildRandomSequences(graph, reverseGraph, sequences, model):
                 
             if len(future) > 0:
                 sequence = sequence + future
-            print("sequence:"+str(sequence))
+
+        #if len(sequences[s]["sequence"]) != len(sequence):
+         #   print("seq: " + str(sequence))
+        print("\n\ns: " + str(s) + ": intentional sequence! : " + str(sequences[s]["sequence"]) + "\nrandom sequence: " + str(sequence))
+         #   raise Exception("invalid sequence length")
+
 
         val = {}
         val["sequence"] = sequence
@@ -240,9 +226,8 @@ def buildRandomSequences(graph, reverseGraph, sequences, model):
         intentionalities[count] = val["intentionality"]
         randomSequences[count] = val
 
-        count = count + 1
 
-        #iters = iters + 1
+        count = count + 1
 
         for intent in intentionalities.keys():
             print(str(intent) + ": " + str(intentionalities[intent]), file=open("Results/random/" + model + "/random_intentionality.txt", "a"))

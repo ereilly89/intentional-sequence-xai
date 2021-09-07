@@ -71,14 +71,11 @@ def visualize(sequences, images, envMap, environment, model, argmax, seed, memor
 
     def loadState(state, env):
 
-        # set agent position and direction
+        # set the agent
         env.agent_pos = state["agent_pos"]
         env.agent_dir = state["agent_dir"]
 
-        #set the env? delete?
-        #env.grid = state["envGrid"]
-
-        # set door
+        # set the door
         door_x = env.door_pos[0]
         door_y = env.door_pos[1]
         door = env.grid.get(door_x, door_y)
@@ -90,12 +87,12 @@ def visualize(sequences, images, envMap, environment, model, argmax, seed, memor
         key_x = env.key_pos[0]
         key_y = env.key_pos[1]
         env.carrying = state["carrying"]
-
         if env.carrying is not None:
             env.grid.set(key_x, key_y, None)
         else:
             key = Key("yellow")
             env.grid.set(key_x, key_y, key)
+
         return env
 
 
@@ -113,7 +110,6 @@ def visualize(sequences, images, envMap, environment, model, argmax, seed, memor
 
         envHash = ""
         stateInfo = statesInfo[startState]
-        #env.seed(stateInfo["seed"][0])
         env = loadState(stateInfo, env)
        
         if env.carrying is not None:
@@ -128,10 +124,6 @@ def visualize(sequences, images, envMap, environment, model, argmax, seed, memor
             print("envHash: " + str(envHash))
             raise Exception("mismatch exception 1")
        
-        #if startState == "a83021da76b200f9":
-        print("\n\nexpected state ("+str(startState) + "): " + str(statesInfo[startState]))
-        print("\nactual state (" + envHash + "): " + str(statesInfo[envHash]) + "\n\n")
-
         obs, reward, done, _ = env.step(0)
         obs, reward, done, _ = env.step(1)
 
@@ -176,14 +168,26 @@ def visualize(sequences, images, envMap, environment, model, argmax, seed, memor
         description.append(sentence)
 
         env.render('human')
-        print("2- " + str(env.hash()))
 
         for action in actions:
             frames.append(numpy.moveaxis(env.render("rgb_array"), 2, 0))
+
+            isCarrying = False
+            if env.carrying is not None:
+                isCarrying = True
+
             obs, reward, done, _ = env.step(action)
 
-            sentence = "Then, the agent " + TO_ACT[action]
-            gridList = obs["image"] #env.grid.encode().tolist()
+            #if s == 1:
+            #    print("isCarrying, " + str(isCarrying))
+            #    print("action, " + str(action))
+
+            if isCarrying == True and action == 3:
+                sentence = "Then, the agent tries to pick up the key but already has it"
+            else:
+                sentence = "Then, the agent " + TO_ACT[action]
+
+            gridList = obs["image"]
             count = 0
 
             for i in range(len(gridList)):
@@ -203,8 +207,6 @@ def visualize(sequences, images, envMap, environment, model, argmax, seed, memor
             sentence = sentence + ". "
             description.append(sentence)
 
-            print("2- " + str(env.hash()))
-            #agent.analyze_feedback(reward, done)
             if done or env.window.closed:
                 break
 
@@ -212,7 +214,6 @@ def visualize(sequences, images, envMap, environment, model, argmax, seed, memor
         if env.window.closed:
             return
 
-        
         try:
             if gif:
                 print("Saving gif... ", end="")
@@ -222,147 +223,13 @@ def visualize(sequences, images, envMap, environment, model, argmax, seed, memor
             print("sequence-> " + str(sequence))
             print("value error.")
 
-
         for sentence in description:
             print(sentence, file=open(gif + str(s) + "_explanation.txt", "a"))
             print(sentence)
-
-    for s in sequences:
-
-        # Set seed for all randomness sources
-
-        # utils.seed(seed)
-
-
-        # Set device
-
-        #device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        #print(f"Device: {device}\n")
-        
-
-        # Load environment
-        #env = utils.make_env(environment, seed) # args.env args.seed
-        
-        """
-        env = envMap[getStartState(sequences[s]["sequence"])]
-        stateInfo = statesInfo[getStartState(sequences[s]["sequence"])]
-        env.set_state(stateInfo)
-        """
-
-        print(str(s) + " : " + str(sequences[s]["sequence"]))
-        # print("keyObs:"+str(images[getStartState(sequences[s]["sequence"])]))
-        
-
-        """
-        print("Environment loaded\n")
-
-
-        # Load agent
-        
-        model_dir = utils.get_model_dir(model) #args.model
-        agent = utils.Agent(env.observation_space, env.action_space, model_dir,
-                            device=device, argmax=argmax, use_memory=memory, use_text=text)
-       
-        print("Agent loaded\n")
-         """
-
-        # Create a window to view the environment
-
-        #env.render('human')
-
-
-        # Create a GIF for each explanation sequence
-
-        frames = []
-
-        #actions = getActionSequence(sequences[s]["sequence"])
-
-        #print("debug: "+str(sequences[s]["sequence"]))
-
-
-        """
-        states = getStateSequence(sequences[s]["sequence"])
     
-        for state in states:
-            env = envMap[str(state)]
-            env.render('human')
-
-            
-            # print("agent_pos: " + str(env.agent_pos))
-            # print("door_pos" + str(env.door_pos))
-            # print("key_pos" + str(env.key_pos))
-            
-
-            stateInfo = statesInfo[str(state)]
-            print("1- " + str(env.hash()))
-            #env.reset(stateInfo=stateInfo)
-
-            # env = env.set_state(envObj) #{'agent_pos':(x, y), ...etc} #verify state is exactly what we need it to be
-
-            env.render('human')
-            if gif:
-                frames.append(numpy.moveaxis(env.render("rgb_array"), 2, 0))
-
-            # obs, reward, done, _ = env.step(action)
-            #print("OBS:"+str(obs))
-            #print("action:"+str(action))
-            # agent.analyze_feedback(reward, done)
-
-            if env.window.closed:
-                break
-
-        if env.window.closed:
-            break
-
-        try:
-            if gif:
-                print("Saving gif... ", end="")
-                write_gif(numpy.array(frames), gif + str(s) + "_states.gif", fps=1/pause)
-                print("Done.")
-        except ValueError:
-            print("sequence-> " + str(sequences[s]["sequence"]))
-            print("value error.")
-
-        """
-
-
-        explain(sequences[s]["sequence"], s)
-        """
+        #if s == 1:
+        #    print("meh")
+    
+    for s in sequences:
         frames = []
-        actions = getActionSequence(sequences[s]["sequence"])
-
-        explanation = []
-
-        env = envMap[getStartState(sequences[s]["sequence"])]
-        stateInfo = statesInfo[getStartState(sequences[s]["sequence"])]
-        #env.reset(stateInfo)
-        env.render('human')
-        print("2- " + str(env.hash()))
-        for action in actions:
-            
-            #env.render('human')
-            if gif:
-                frames.append(numpy.moveaxis(env.render("rgb_array"), 2, 0))
-
-            obs, reward, done, _ = env.step(action)
-            print("2- " + str(env.hash()))
-            #print("OBS:"+str(obs))
-            #print("action:"+str(action))
-            agent.analyze_feedback(reward, done)
-
-            if done or env.window.closed:
-                break
-
-        frames.append(numpy.moveaxis(env.render("rgb_array"), 2, 0))
-        if env.window.closed:
-            break
-
-        try:
-            if gif:
-                print("Saving gif... ", end="")
-                write_gif(numpy.array(frames), gif + str(s) + "_actions.gif", fps=1/pause)
-                print("Done.")
-        except ValueError:
-            print("sequence-> " + str(sequences[s]["sequence"]))
-            print("value error.")
-        """
+        explain(sequences[s]["sequence"], s)

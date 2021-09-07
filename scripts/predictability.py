@@ -52,16 +52,12 @@ def resetAI(stateInfo, env): # returns a ParallelEnv
         env.seed(args.seed)
 
     print("\n\nepisodes: " + str(args.episodes))
-    #if int(args.episodes) >= 0:
     obs = env.envs[0].reset(None)
         
     # set the state of the environment
     env.envs[0].agent_pos = stateInfo["agent_pos"]
     env.envs[0].agent_dir = stateInfo["agent_dir"]
-
     redraw(env, obs, False)
-    
-    #resetManual(env.envs[0])
 
     return env
         
@@ -70,9 +66,6 @@ def stepManual(action):
     obs, reward, done, info = env.step(action)
     print("DONE: " + str(done))
     if done:
-        print("\nThis is some done text...\n")
-        #stateInfo = resetManual()
-        print("stateInfo!!! " + str(stateInfo))
         return stateInfo
     else:
         redraw(env, obs, True)

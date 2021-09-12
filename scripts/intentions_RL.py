@@ -215,7 +215,7 @@ def buildSequences(graph, reverseGraph, threshold, budget, model):
         print("model: " + str(model))
         if model == "Model_A" or model == "Model_B" or model == "Model_C":
             print(str(intentionalities[intent]), file=open("Results/intentional/" + model + "/intentionality.csv", "a"))
-    
+            
     if model == "Model_A" or model == "Model_B" or model == "Model_C":
         summaryFile = "Results/intentional/" + model + "/summary.csv"
         if exists(summaryFile):

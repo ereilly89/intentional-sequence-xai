@@ -1,3 +1,0 @@
-The agent starts pointed right, with the yellow key and green goal in sight. 
-Then, the agent moves forward. 
-Then, the agent picks up the key. 

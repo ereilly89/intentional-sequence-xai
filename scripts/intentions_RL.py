@@ -7,6 +7,7 @@ import pandas as pd
 import utils
 import torch
 import os
+from os.path import exists
 from torch_ac.utils.penv import ParallelEnv
 from scripts.intentions import getStateIntentionality, getImportance, getConfidence, is_integer
 
@@ -106,6 +107,46 @@ def getRandomSequence(currState, MDP, reverse, seqLen):
     return sequence
 
 
+def computeStats(sequences):
+    sumSeqLen = 0
+    minSeqLen = math.inf
+    maxSeqLen = -1
+    sumIntent = 0
+    minIntent = math.inf
+    maxIntent = -1
+
+    stats = {}
+    for s in sequences:
+        length = int(len(sequences[s]["sequence"])/2) + 1
+        intent = sequences[s]["intentionality"]
+        
+        if length > maxSeqLen:
+            maxSeqLen = length
+        if length < minSeqLen:
+            minSeqLen = length
+
+        if intent > maxIntent:
+            maxIntent = intent
+        if intent < minIntent:
+            minIntent = intent
+
+        sumSeqLen = sumSeqLen + length
+        sumIntent = sumIntent + intent
+    
+    avgSeqLen = sumSeqLen / len(sequences)
+    avgIntent = sumIntent / len(sequences)
+
+    stats["avgSeqLen"] = avgSeqLen
+    stats["minSeqLen"] = minSeqLen
+    stats["maxSeqLen"] = maxSeqLen
+    stats["avgIntent"] = avgIntent
+    stats["minIntent"] = minIntent
+    stats["maxIntent"] = maxIntent
+
+    return stats
+
+
+
 def buildSequences(graph, reverseGraph, threshold, budget, model):
 
     print("building sequences...")
@@ -140,8 +181,13 @@ def buildSequences(graph, reverseGraph, threshold, budget, model):
     intents = dict(intentTuple)
 
     intentionalities = {}
-    os.remove("Results/intentional/" + model + "/intentionality.txt")
-
+    stats = {}
+    outputFile = "Results/intentional/" + model + "/intentionality.csv"
+    if exists(outputFile):
+        os.remove(outputFile)
+    
+    if model == "Model_A" or model == "Model_B" or model == "Model_C":
+        print("Intentionality", file=open(outputFile, "w+"))
     print("parsing through states in order of intentionality...")
     # Parse through each state from highest to lowest intent, extract the intentional sequences
     for key in intents.keys():
@@ -166,8 +212,14 @@ def buildSequences(graph, reverseGraph, threshold, budget, model):
             break
     
     for intent in intentionalities.keys():
-        print(str(intent) + ": " + str(intentionalities[intent]), file=open("Results/intentional/" + model + "/intentionality.txt", "a"))
-    
+        print("model: " + str(model))
+        if model == "Model_A" or model == "Model_B" or model == "Model_C":
+            print(str(intentionalities[intent]), file=open("Results/intentional/" + model + "/intentionality.csv", "a"))
+    if model == "Model_A" or model == "Model_B" or model == "Model_C":
+        summaryDict = computeStats(sequences)
+        for key in summaryDict:
+            print(str(key) + "," + str(summaryDict[key]), file=open("Results/intentional/" + model + "/summary.csv", "a"))
+
     return sequences
 
 
@@ -221,15 +273,28 @@ def buildRandomSequences(graph, reverseGraph, sequences, model):
         val = {}
         val["sequence"] = sequence
         val["intentionality"] = getSequenceIntentionality(sequence)
-        os.remove("Results/random/" + model + "/random_intentionality.txt")
+        outputFile = "Results/random/" + model + "/random_intentionality.csv"
+
+        if exists(outputFile):
+            os.remove(outputFile)
+
+        print("Intentionality", file=open(outputFile, "w+"))
 
         intentionalities[count] = val["intentionality"]
         randomSequences[count] = val
 
-
         count = count + 1
 
         for intent in intentionalities.keys():
-            print(str(intent) + ": " + str(intentionalities[intent]), file=open("Results/random/" + model + "/random_intentionality.txt", "a"))
+            print(str(intentionalities[intent]), file=open("Results/random/" + model + "/random_intentionality.csv", "a"))
+
+
+        summaryFile = "Results/random/" + model + "/summary.csv"
+        if exists(summaryFile):
+            os.remove(summaryFile)
+        summaryDict = computeStats(sequences)
+        for key in summaryDict:
+            print(key + "," + str(summaryDict[key]), file=open("Results/random/" + model + "/summary.csv", "a"))
+
 
     return randomSequences

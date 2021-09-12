@@ -1,0 +1,4 @@
+model, prediction, actual
+Model_A, 6, 8
+Model_B, 6, 9
+Model_C, 6, 11

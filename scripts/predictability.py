@@ -12,6 +12,7 @@ import torch
 from torch_ac.utils.penv import ParallelEnv
 from typing import Counter
 import utils
+import pandas as pd
 
 
 def redraw(env, img, isManual):
@@ -91,6 +92,7 @@ def key_handler(event):
             env.seed(args.seed)
             environment = resetAI(stateInfo, env)
             writeAgentPlayback(environment)
+            
         return
 
     if event.key == 'right':
@@ -211,10 +213,25 @@ def writeAgentPlayback(env):
     #print("Manual Steps: " + str(manualSteps))
     #difference = AI_STEPS - manualSteps
     #print("Difference: " + str(difference))
-    message = args.model + ", " + str(count["count"]) + ", " + str(AI_STEPS) #+ ", Manual Steps: " + str(manualSteps) + ", Difference: " + str(difference)
-    print(message, file=open("Results/evaluation.csv", "a"))
+    
+    if args.model == "Model_A" or args.model == "Model_B" or args.model == "Model_C":
+        message = args.model + ", " + str(count["count"]) + ", " + str(AI_STEPS) #+ ", Manual Steps: " + str(manualSteps) + ", Difference: " + str(difference)
+        print(message, file=open("Results/intentional_evaluation.csv", "a"))
+    elif args.model == "Model_D" or args.model == "Model_E" or args.model == "Model_F":
+        message = args.model + ", " + str(count["count"]) + ", " + str(AI_STEPS) #+ ", Manual Steps: " + str(manualSteps) + ", Difference: " + str(difference)
+        print(message, file=open("Results/random_evaluation.csv", "a"))
+    else:
+        print("Invalid model, try 'Model_A', 'Model_B', ..., or 'Model_F'")
     print("Saving gif... ", end="")
     write_gif(numpy.array(frames), "Results/AI_Playback/" + str(args.env) + "_" + str(args.model) + "_" + str(args.seed) + "_" + str(args.episodes) + "_actions.gif", fps=1/1)
+
+
+def is_integer(n):
+    try:
+        int(n)
+        return True
+    except ValueError:
+        return False
 
 
 parser = argparse.ArgumentParser()
@@ -268,8 +285,21 @@ agent = utils.Agent(env.observation_space, env.action_space, model_dir,
                     device=device, argmax=False, num_envs=1,
                     use_memory=False, use_text=False)
 
-if not os.path.isfile("Results/evaluation.csv"):
-    print("model, prediction, actual", file=open("Results/evaluation.csv", "w+"))
+if not os.path.isfile("Results/intentional_evaluation.csv"):
+    print("model, prediction, actual", file=open("Results/intentional_evaluation.csv", "w+"))
+
+if not os.path.isfile("Results/intentional_correlation.csv"):
+    print("model, intentionality_user, intentionality_in_order", file=open("Results/intentional_correlation.csv", "w+"))
+
+if not os.path.isfile("Results/random_evaluation.csv"):
+    print("model, prediction, actual", file=open("Results/random_evaluation.csv", "w+"))
+
+if not os.path.isfile("Results/random_correlation.csv"):
+    print("model, intentionality_user, intentionality_in_order", file=open("Results/random_correlation.csv", "w+"))
+
+
+#if not os.path.isfile("Results/random_intentionality.csv"):
+#    print("")
 
 for i in range(int(args.episodes)):
 
@@ -290,3 +320,60 @@ for i in range(int(args.episodes)):
     window.show(block=True)
 
     args.episodes = str(int(args.episodes) - 1)
+
+budget = 10
+unranked = {}
+for i in range(budget):
+    unranked[i] = True
+
+intentionality_user = []
+for i in range(10):
+    valid = False
+    while not valid:
+
+        print("\n")
+        for seq in unranked.keys():
+            print("[" + str(seq) + "]: sequence #" + str(seq))
+        print("\n")
+
+        if i == 0:
+            theInput = input("Which sequence was the most informative to you in understanding the agents decision-making process?\n")
+        else:
+            theInput = input("Which sequence was the next most informative to you in understanding the agents decision-making process?\n")
+      
+        if is_integer(theInput):
+            intInput = int(theInput)
+
+            if intInput in unranked.keys():
+                unranked.pop(intInput, None)
+
+                if args.model == "Model_A" or args.model == "Model_B" or args.model == "Model_C": 
+                    intentions = pd.read_csv("Results/intentional/" + args.model + "/intentionality.csv")
+                elif args.model == "Model_D" or args.model == "Model_E" or args.model == "Model_F": 
+                    intentions = pd.read_csv("Results/random/" + args.model + "/random_intentionality.csv")
+                else:
+                    print("Invalid model, try 'Model_A', 'Model_B', ..., or 'Model_F'")
+
+                intentionsDict = intentions.to_dict()
+                intentVal = intentionsDict["Intentionality"][intInput]
+                intentionality_user.append(intentVal)
+                valid = True
+
+        if not valid:
+            print("\n------------------------------------------\nPlease enter a valid sequence number.")
+
+userIntentRank = pd.Series(intentionality_user)
+actualIntentRank = pd.Series(sorted(intentionality_user, reverse=True))
+
+if args.model == "Model_A" or args.model == "Model_B" or args.model == "Model_C":
+    for i in range(len(userIntentRank)):
+        print(args.model + "," + str(userIntentRank[i]) + "," + str(actualIntentRank[i]), file=open("Results/intentional_correlation.csv", "a"))
+elif args.model == "Model_D" or  args.model == "Model_E" or args.model == "Model_F":
+    for i in range(len(userIntentRank)):
+        print(args.model + "," + str(userIntentRank[i]) + "," + str(actualIntentRank[i]), file=open("Results/random_correlation.csv", "a"))
+else:
+    print("Invalid model, try 'Model_A', 'Model_B', ..., or 'Model_F'")
+
+
+#print("Pearson Correlation: " + str(userIntentRank.corr(actualIntentRank)))
+#print("Spearman Correlation: " + str(userIntentRank.corr(actualIntentRank, method='spearman')))

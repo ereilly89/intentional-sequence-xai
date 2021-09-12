@@ -1,5 +1,6 @@
 import csv
 from scripts.intentions import getStateIntentionality, getImportance, getConfidence, is_integer
+import pandas as pd
 
 def getIntentionalStates(dtm_output):
     probabilities = []
@@ -154,17 +155,76 @@ def buildSequences(dtm_output, threshold, budget):
             future = getSequence(state, MDP, intentStates, False, threshold)
             sequence = context + ["s" + str(state)] + future
             val["sequence"] = sequence
-            val["intentionality"] = getSequenceIntentionality(sequence)
+            val["intentionality"] = getSequenceIntentionality(sequence) / 100
             sequences[count] = val
             count = count + 1
         else:
             break
-    #print(str(sequences))
+
+    return sequences
 
 
 def main():
-    # specify the dtm output file to be parsed
+
     dtm_output = "dtm-output.csv"
+
+    # load state information
+    # file_mappings = "RoMDP_mappings-CPLEX.csv"
+
+    file_rewards = "RoMDP_rewards_CPLEX.csv"
+    file_probabilities = "RoMDP_probabilities-CPLEX.csv"
+    firstIter = True
+    outputDict = {}
+
+    with open(file_rewards, 'r') as csvfile:
+       datareader = csv.reader(csvfile)
+       startStates = []
+       actionIndices = []
+       finishStates = []
+       rewards = []
+       for row in datareader:
+
+            if firstIter:
+               firstIter = False
+               continue
+        
+            #print("row:" + str(row))
+            if len(row) == 1:
+                break
+            triple = row[1].replace("(", "")
+            triple = triple.replace(")", "")
+            tripleArray = triple.split(",")
+
+            #print("tripleArray: " + str(tripleArray))
+            startStates.append(tripleArray[0])
+            actionIndices.append(tripleArray[1])
+            finishStates.append(tripleArray[2])
+            rewards.append(row[2])
+
+
+    firstIter = True
+    with open(file_probabilities, 'r') as csvfile:
+        datareader = csv.reader(csvfile)
+        probs = []
+        for row in datareader:
+            if firstIter:
+                firstIter = False
+                continue
+            if len(row) == 1:
+                break
+            probs.append(row[2])
+
+    outputDict["Start state index"] = startStates
+    outputDict["Action index"] = actionIndices
+    outputDict["Finish state index"] = finishStates
+    outputDict["Probability for Triple"] = probs
+    outputDict["Reward for Triple"] = rewards
+
+    outputDf = pd.DataFrame(data=outputDict)
+    outputDf.to_csv(dtm_output, index=False)
     sequences = buildSequences(dtm_output, threshold=0, budget=10) #threshold must be greater than or equal to 0
     
-#main()
+    #print(str(sequences))
+
+
+main()

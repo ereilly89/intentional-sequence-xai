@@ -1,5 +1,0 @@
-The agent starts pointed right, with the yellow door and yellow key in sight. 
-Then, the agent turns right. 
-Then, the agent turns right. 
-Then, the agent turns right. 
-Then, the agent opens the door. 

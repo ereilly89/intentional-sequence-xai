@@ -1,2 +1,0 @@
-The agent starts pointed left and is carrying the key. 
-Then, the agent picks up the key. 

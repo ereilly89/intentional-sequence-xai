@@ -1,0 +1,2 @@
+The agent starts pointed up, with the yellow key and yellow door in sight. 
+Then, the agent picks up the key. 

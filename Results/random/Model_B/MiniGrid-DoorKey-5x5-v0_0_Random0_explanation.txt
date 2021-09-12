@@ -1,2 +1,0 @@
-The agent starts pointed up. 
-Then, the agent turns right to see the door and key. 

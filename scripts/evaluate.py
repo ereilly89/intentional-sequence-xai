@@ -267,15 +267,20 @@ def main():
     os.remove("graph.txt")
     print(graph, file=open("graph.txt", "w"))
 
-    #construct and visualize the intentional sequences
-    sequences = buildSequences(graph, reverseGraph, 0, 10, args.model)
-    gifFilename =  "Results/intentional/" + str(args.model) + "/" + str(args.env) + "_" + str(args.seed) + "_"
-    visualize(sequences, images, envMap, args.env, args.model, args.argmax, args.seed, args.memory, "", args.episodes, 1, gifFilename, model_dir, agent, statesInfo)
 
-    #construct and visualize the random sequences
-    randomSequences = buildRandomSequences(graph, reverseGraph, sequences, args.model)
-    rdmFilename = "Results/random/" + str(args.model) + "/" + str(args.env) + "_" + str(args.seed) + "_Random"
-    visualize(randomSequences, images, envMap, args.env, args.model, args.argmax, args.seed, args.memory, "", args.episodes, 1, rdmFilename, model_dir, agent, statesInfo)
+    sequences = buildSequences(graph, reverseGraph, 0, 10, args.model)
+    if args.model == "Model_A" or args.model == "Model_B" or args.model == "Model_C":
+        #construct and visualize the intentional sequences
+        gifFilename =  "Results/intentional/" + str(args.model) + "/" + str(args.env) + "_" + str(args.seed) + "_"
+        visualize(sequences, images, envMap, args.env, args.model, args.argmax, args.seed, args.memory, "", args.episodes, 1, gifFilename, model_dir, agent, statesInfo)
+
+    elif args.model == "Model_D" or args.model == "Model_E" or args.model == "Model_F":
+        #construct and visualize the random sequences
+        randomSequences = buildRandomSequences(graph, reverseGraph, sequences, args.model)
+        rdmFilename = "Results/random/" + str(args.model) + "/" + str(args.env) + "_" + str(args.seed) + "_Random"
+        visualize(randomSequences, images, envMap, args.env, args.model, args.argmax, args.seed, args.memory, "", args.episodes, 1, rdmFilename, model_dir, agent, statesInfo)
+    else:
+        "Please enter a valid model. Ex) Model_A, Model_B, ..., Model_F"
 
 if __name__ == '__main__':
     main()

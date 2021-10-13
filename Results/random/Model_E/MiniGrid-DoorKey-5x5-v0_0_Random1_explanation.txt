@@ -1,2 +1,3 @@
-The agent starts pointed down, with the yellow door in sight and is carrying the key. 
-Then, the agent tries to pick up the key but already has it. 
+The agent starts pointed right, with the yellow door and yellow key in sight. 
+Then, the agent turns right. 
+Then, the agent moves forward. 

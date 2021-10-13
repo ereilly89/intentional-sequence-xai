@@ -69,7 +69,7 @@ def visualize(sequences, images, envMap, environment, model, argmax, seed, memor
         return actions
 
 
-    def loadState(state, env):
+    def loadState(state, env, startState, statesInfo):
 
         # set the agent
         env.agent_pos = state["agent_pos"]
@@ -88,11 +88,63 @@ def visualize(sequences, images, envMap, environment, model, argmax, seed, memor
         key_y = env.key_pos[1]
         env.carrying = state["carrying"]
         if env.carrying is not None:
-            env.grid.set(key_x, key_y, None)
+            for j in range(env.grid.height):
+                for i in range(env.grid.width):
+                    c = env.grid.get(i, j)
+                    if c is not None:
+                        if c.type == 'key':
+                            env.grid.set(i, j, None)
         else:
             key = Key("yellow")
-            env.grid.set(key_x, key_y, key)
+            #print("grid" + str(env.grid))
+            #print("KEY_X: " + str(key_x))
+            #print("KEY_Y: " + str(key_y))
 
+            envHash = None
+            #while envHash != startState:
+
+            for j in range(env.grid.height):
+                for i in range(env.grid.width):
+                    c = env.grid.get(i, j)
+                    #print("c:"+str(c))
+                    if c is not None:
+                        if c.type == 'key':
+                            env.grid.set(i, j, None)
+            
+            gridList = statesInfo[startState]["grid_encoding"]
+            width = 0
+
+            for a in gridList:
+                height = 0
+
+                for b in a:
+                    theTuple = gridList[width][height]
+
+                    if theTuple[0] == 5:
+                        env.grid.set(width, height, key)
+                        break
+
+                    height += 1
+
+                width += 1
+
+            #print("\nenv.hash(): " + str(env.hash()) + ", startState: " + str(startState))
+            #raise Exception("does this even get hit?")
+            if env.hash() != startState:
+                print("\n\nTarget: " + str(statesInfo[startState]))
+                #print("Actual: " + str(statesInfo[env.hash()]))
+                print("\n")
+                print("startState: " + str(startState))
+                print("envHash: " + str(envHash))
+                print("grid_encoding -> " + str(env.grid.encode().tolist()))
+                print("agent_pos -> " + str(env.agent_pos))
+                print("agent_dir -> " + str(env.agent_dir))
+                print("key_pos -> " + str(env.key_pos))
+                print("door_pos -> " + str(env.door_pos))
+                print("carryingKey -> " + str(env.carrying)+"\n\n")
+
+            #env.grid.set(key_x, key_y, key)
+            #env.put_obj(key, key_x, key_y)
         return env
 
 
@@ -100,7 +152,9 @@ def visualize(sequences, images, envMap, environment, model, argmax, seed, memor
         frames = []
         description = []
         actions = getActionSequence(sequence)
-        
+        print("s: " + str(s))
+        print("sequence: " + str(sequence))
+
         explainFile = gif + str(s) + "_explanation.txt"
         if exists(explainFile):
             os.remove(explainFile) 
@@ -110,7 +164,7 @@ def visualize(sequences, images, envMap, environment, model, argmax, seed, memor
 
         envHash = ""
         stateInfo = statesInfo[startState]
-        env = loadState(stateInfo, env)
+        env = loadState(stateInfo, env, startState, statesInfo)
        
         if env.carrying is not None:
             print(str(True))
@@ -121,7 +175,14 @@ def visualize(sequences, images, envMap, environment, model, argmax, seed, memor
 
         if startState != envHash:
             print("stateInfo: " + str(stateInfo))
+            print("startState: " + str(startState))
             print("envHash: " + str(envHash))
+            print("grid_encoding -> " + str(env.grid.encode().tolist()))
+            print("agent_pos -> " + str(env.agent_pos))
+            print("agent_dir -> " + str(env.agent_dir))
+            print("key_pos -> " + str(env.key_pos))
+            print("door_pos -> " + str(env.door_pos))
+            print("carryingKey -> " + str(env.carrying))
             raise Exception("mismatch exception 1")
        
         obs, reward, done, _ = env.step(0)
@@ -129,7 +190,7 @@ def visualize(sequences, images, envMap, environment, model, argmax, seed, memor
 
         env = envMap[startState]
         stateInfo = statesInfo[startState]
-        env = loadState(stateInfo, env)
+        env = loadState(stateInfo, env, startState, statesInfo)
 
         if startState != envHash:
             print("stateInfo: " + str(stateInfo))
@@ -176,6 +237,7 @@ def visualize(sequences, images, envMap, environment, model, argmax, seed, memor
             if env.carrying is not None:
                 isCarrying = True
 
+            print("str(action): " + str(action))
             obs, reward, done, _ = env.step(action)
 
             #if s == 1:
@@ -225,7 +287,7 @@ def visualize(sequences, images, envMap, environment, model, argmax, seed, memor
 
         for sentence in description:
             print(sentence, file=open(gif + str(s) + "_explanation.txt", "a"))
-            print(sentence)
+            #print(sentence)
     
         #if s == 1:
         #    print("meh")

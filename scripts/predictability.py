@@ -286,20 +286,17 @@ agent = utils.Agent(env.observation_space, env.action_space, model_dir,
                     use_memory=False, use_text=False)
 
 if not os.path.isfile("Results/intentional_evaluation.csv"):
-    print("model, prediction, actual", file=open("Results/intentional_evaluation.csv", "w+"))
+    print("model,prediction,actual", file=open("Results/intentional_evaluation.csv", "w+"))
 
 if not os.path.isfile("Results/intentional_correlation.csv"):
-    print("model, intentionality_user, intentionality_in_order", file=open("Results/intentional_correlation.csv", "w+"))
+    print("model,userRank,actualRank", file=open("Results/intentional_correlation.csv", "w+"))
 
 if not os.path.isfile("Results/random_evaluation.csv"):
-    print("model, prediction, actual", file=open("Results/random_evaluation.csv", "w+"))
+    print("model,prediction,actual", file=open("Results/random_evaluation.csv", "w+"))
 
 if not os.path.isfile("Results/random_correlation.csv"):
-    print("model, intentionality_user, intentionality_in_order", file=open("Results/random_correlation.csv", "w+"))
+    print("model,userRank,actualRank", file=open("Results/random_correlation.csv", "w+"))
 
-
-#if not os.path.isfile("Results/random_intentionality.csv"):
-#    print("")
 
 for i in range(int(args.episodes)):
 

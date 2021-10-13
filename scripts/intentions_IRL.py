@@ -1,5 +1,5 @@
 import csv
-from scripts.intentions import getStateIntentionality, getImportance, getConfidence, is_integer
+from scripts.intentions import getIntentionality, getDesire, getBelief, is_integer
 import pandas as pd
 
 def getIntentionalStates(dtm_output):
@@ -153,7 +153,7 @@ def buildSequences(dtm_output, threshold, budget):
             state = key
             context = getSequence(state, rMDP, intentStates, True, threshold)
             future = getSequence(state, MDP, intentStates, False, threshold)
-            sequence = context + ["s" + str(state)] + future
+            sequence = context + ["s" + str(state).strip()] + future
             val["sequence"] = sequence
             val["intentionality"] = getSequenceIntentionality(sequence) / 100
             sequences[count] = val
@@ -164,12 +164,73 @@ def buildSequences(dtm_output, threshold, budget):
     return sequences
 
 
-def main():
+def parseMapping(file_mapping):
+    stateMapping = {}
+    actionMapping = {}
+    with open(file_mapping, 'r') as csvfile:
+        datareader = csv.reader(csvfile)
+        collectStates = False
+        collectActions = False
+        for row in datareader:
+            if len(row) > 0:
+                if collectStates and is_integer(row[0]):
+                    fString = row[1]
+                    remove = ['(', ')', '\'', ' ']
+                    for value in remove:
+                        fString = fString.replace(value, '')
+                    features = []
+                    for f in fString.split(','):
+                        features.append(f)
+                    stateMapping[int(row[0])] = features
+                if collectActions and is_integer(row[0]):
+                    remove = ['(', ')', '\'', ',']
+                    aString = row[1]
+                    for value in remove:
+                        aString = aString.replace(value, '')
+                    actionMapping[int(row[0])] = aString
+                if row[0] == "State Index":
+                    headerString = row[1]
+                    remove = ['(', ')', '\'', ' ']
+                    for value in remove:
+                        headerString = headerString.replace(value, '')
+                    headers = []
+                    for h in headerString.split(','):
+                        headers.append(h)
+                    headers.append("Action")
+                    headers.append("REWARD")
+                    collectStates = True
+                    collectActions = False
+                if row[0] == "Action Index":
+                    collectActions = True
+                    collectStates = False
+        return stateMapping, actionMapping, headers
 
+def getStateSequence(sequence):
+    states = []
+    for i in range(len(sequence)):
+        if i % 2 == 0:
+            x = sequence[i]
+            states.append(str(x[1:]).strip())
+    return states
+        
+def getActionSequence(sequence):
+    actions = []
+    for i in range(len(sequence)):
+        if i % 2 != 0:
+            x = sequence[i]
+            actions.append(int(x[1:]))
+    return actions
+
+def main():
+    """
     dtm_output = "dtm-output.csv"
 
     # load state information
-    # file_mappings = "RoMDP_mappings-CPLEX.csv"
+    file_mappings = "RoMDP_mappings-CPLEX.csv"
+
+    stateMapping, actionMapping, headers = parseMapping(file_mappings)
+    print("stateMapping: " + str(stateMapping))
+    print("actionMapping: " + str(actionMapping))
 
     file_rewards = "RoMDP_rewards_CPLEX.csv"
     file_probabilities = "RoMDP_probabilities-CPLEX.csv"
@@ -224,7 +285,24 @@ def main():
     outputDf.to_csv(dtm_output, index=False)
     sequences = buildSequences(dtm_output, threshold=0, budget=10) #threshold must be greater than or equal to 0
     
-    #print(str(sequences))
+    for s in sequences:
+        states = getStateSequence(sequences[s]["sequence"])
+        actions = getActionSequence(sequences[s]["sequence"])
 
+        print("\nSequence #" + str(s) +"\n")
+        if len(states) >= 1:
+            startState = str(states[0])
+            print("\tstate: " + str(stateMapping[int(startState)]))
+            for i in range(len(states)-1):
+                actionID = actions[i]
+                stateID = states[i+1]
+                print("\taction: " + str(actionMapping[actionID]))
+                print("\tstate: " + str(stateMapping[int(stateID)]))
+        else:
+            print("len(states) < 1")
+        print("\tintentionality: " + str(sequences[s]["intentionality"]))
+        
+    #print(str(sequences))
+    """
 
 main()

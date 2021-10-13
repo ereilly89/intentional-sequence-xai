@@ -1,14 +1,3 @@
 The agent starts pointed left, with the yellow key in sight. 
-Then, the agent turns left. 
 Then, the agent turns left to see the door. 
-Then, the agent turns left. 
-Then, the agent turns left. 
-Then, the agent turns left. 
-Then, the agent toggles the door. 
-Then, the agent turns left. 
-Then, the agent turns left. 
-Then, the agent turns left. 
-Then, the agent turns left. 
-Then, the agent turns left. 
-Then, the agent toggles the door. 
-Then, the agent toggles the door. 
+Then, the agent picks up the key. 

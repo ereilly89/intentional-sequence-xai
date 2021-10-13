@@ -2,3 +2,5 @@ The agent starts pointed right, with the yellow door in sight and is carrying th
 Then, the agent toggles the door to see the goal. 
 Then, the agent moves forward. 
 Then, the agent moves forward. 
+Then, the agent turns right. 
+Then, the agent moves forward. 

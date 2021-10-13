@@ -1,10 +1,4 @@
-The agent starts pointed down. 
-Then, the agent turns left to see the key and door. 
-Then, the agent turns right. 
-Then, the agent moves forward. 
-Then, the agent picks up the key. 
-Then, the agent turns right. 
-Then, the agent toggles the door. 
-Then, the agent moves forward. 
-Then, the agent moves forward. 
-Then, the agent toggles the door. 
+The agent starts pointed down, with the yellow door in sight and is carrying the key. 
+Then, the agent turns left. 
+Then, the agent turns left. 
+Then, the agent is done. 

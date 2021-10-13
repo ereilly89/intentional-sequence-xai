@@ -1,8 +1,3 @@
-The agent starts pointed right, with the yellow door in sight and is carrying the key. 
-Then, the agent drops the key. 
-Then, the agent turns left. 
-Then, the agent turns left. 
-Then, the agent turns right. 
-Then, the agent moves forward. 
-Then, the agent turns right. 
-Then, the agent turns left. 
+The agent starts pointed left and is carrying the key. 
+Then, the agent tries to pick up the key but already has it. 
+Then, the agent tries to pick up the key but already has it. 

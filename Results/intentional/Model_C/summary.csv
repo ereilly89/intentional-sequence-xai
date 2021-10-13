@@ -1,6 +1,6 @@
-avgSeqLen,5.7
-minSeqLen,3
-maxSeqLen,11
-avgIntent,88.09233896738803
-minIntent,5.749383226685702
-maxIntent,611.3226843396288
+avgSeqLen,8.5
+minSeqLen,4
+maxSeqLen,16
+avgIntent,601.359212049193
+minIntent,5.076294593836646
+maxIntent,3301.2691916204894

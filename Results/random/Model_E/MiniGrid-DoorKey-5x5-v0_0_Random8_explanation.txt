@@ -1,2 +1,8 @@
-The agent starts pointed down, with the green goal in sight and is carrying the key. 
-Then, the agent moves forward. 
+The agent starts pointed left and is carrying the key. 
+Then, the agent turns left to see the goal and door. 
+Then, the agent tries to pick up the key but already has it. 
+Then, the agent turns left. 
+Then, the agent turns right. 
+Then, the agent turns right. 
+Then, the agent turns right. 
+Then, the agent is done. 
